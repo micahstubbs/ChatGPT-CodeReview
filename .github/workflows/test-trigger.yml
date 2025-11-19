@@ -1,0 +1,13 @@
+name: Test Workflow Trigger
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+jobs:
+  test:
+    if: github.event.pull_request.user.login == 'micahstubbs'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Echo test
+        run: echo "Workflow triggered successfully for PR by ${{ github.event.pull_request.user.login }}"
