@@ -1,4 +1,5 @@
 import { OpenAI, AzureOpenAI } from 'openai';
+import { isReasoningModel, getEnv, safeJsonParse } from './utils.js';
 
 export class Chat {
   private openai: OpenAI | AzureOpenAI;
@@ -30,9 +31,9 @@ export class Chat {
   }
 
   // Detect if model requires Responses API (GPT-5.1+ models)
+  // Now using centralized utility function
   private isReasoningModel(model: string): boolean {
-    const reasoningModels = ['gpt-5.1', 'gpt-5.1-codex', 'gpt-5.1-codex-mini', 'gpt-5-pro'];
-    return reasoningModels.some(m => model.includes(m));
+    return isReasoningModel(model);
   }
 
   private generatePrompt = (patch: string) => {
@@ -186,15 +187,12 @@ export class Chat {
     console.timeEnd('code-review-chat-api cost');
 
     if (res.choices.length) {
-      try {
-        const json = JSON.parse(res.choices[0].message.content || "");
-        return json;
-      } catch (e) {
-        return {
-          lgtm: false,
-          review_comment: res.choices[0].message.content || ""
-        };
-      }
+      const content = res.choices[0].message.content || "";
+      const fallback = {
+        lgtm: false,
+        review_comment: content
+      };
+      return safeJsonParse(content, fallback);
     }
 
     return {
