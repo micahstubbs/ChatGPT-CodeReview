@@ -3,6 +3,8 @@
  * This module provides sophisticated analysis of code reviews
  */
 
+import fetch from 'node-fetch';
+
 export interface ReviewMetrics {
   totalReviews: number;
   criticalIssues: number;
@@ -169,6 +171,16 @@ export function calculateQualityScore(
     );
   }
 
+  // Multi-approver support (for future use with review aggregation)
+  // Note: Single review scoring doesn't enforce requiredApprovers
+  // Use aggregateReviewMetrics() with authorization array for multi-approver enforcement
+  if (requiredApprovers > 1 && !reviewerAuth) {
+    console.warn(
+      `Multi-approver requirement (${requiredApprovers}) specified but no authorization provided. ` +
+      'Use verifyReviewerAuthorization() and aggregate multiple reviews to enforce this.'
+    );
+  }
+
   // Ensure score is in valid range
   score = Math.max(0, Math.min(100, score));
 
@@ -263,27 +275,60 @@ export async function verifyReviewerAuthorization(
   repoName: string,
   githubToken: string
 ): Promise<ReviewerAuth> {
-  // This is a placeholder - in production, this MUST call GitHub API
-  // Example: GET /repos/{owner}/{repo}/collaborators/{username}/permission
+  try {
+    // Query GitHub API to verify reviewer permissions
+    // GET /repos/{owner}/{repo}/collaborators/{username}/permission
+    const response = await fetch(
+      `https://api.github.com/repos/${repoOwner}/${repoName}/collaborators/${githubLogin}/permission`,
+      {
+        method: 'GET',
+        headers: {
+          'Authorization': `token ${githubToken}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'User-Agent': 'ChatGPT-CodeReview-Bot'
+        }
+      }
+    );
 
-  // SECURITY: Replace this with actual GitHub API call
-  // const response = await fetch(
-  //   `https://api.github.com/repos/${repoOwner}/${repoName}/collaborators/${githubLogin}/permission`,
-  //   { headers: { Authorization: `token ${githubToken}` } }
-  // );
-  // const data = await response.json();
-  // const hasWriteAccess = ['admin', 'write'].includes(data.permission);
+    if (!response.ok) {
+      // If user is not a collaborator, GitHub returns 404
+      if (response.status === 404) {
+        return {
+          isVerified: true, // API call succeeded
+          login: githubLogin,
+          hasWriteAccess: false, // Not a collaborator
+          authToken: githubToken
+        };
+      }
 
-  console.warn(
-    'SECURITY WARNING: verifyReviewerAuthorization is not fully implemented. ' +
-    'This placeholder MUST be replaced with actual GitHub API verification before production use.'
-  );
+      throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
+    }
 
-  // Placeholder return - INSECURE, must implement actual API verification
-  return {
-    isVerified: false, // Set to false until implemented
-    login: githubLogin,
-    hasWriteAccess: false, // Must query GitHub API
-    authToken: undefined // Must verify signed GitHub event
-  };
+    const data = await response.json() as { permission: string; user: { login: string } };
+
+    // Verify the login matches (security check)
+    const isVerified = data.user.login.toLowerCase() === githubLogin.toLowerCase();
+
+    // Check if user has write or admin access
+    // Permissions: 'read', 'write', 'admin', 'none'
+    const hasWriteAccess = ['admin', 'write'].includes(data.permission);
+
+    return {
+      isVerified,
+      login: data.user.login,
+      hasWriteAccess,
+      authToken: githubToken
+    };
+
+  } catch (error) {
+    console.error('Failed to verify reviewer authorization:', error);
+
+    // On error, return unverified status (fail secure)
+    return {
+      isVerified: false,
+      login: githubLogin,
+      hasWriteAccess: false,
+      authToken: undefined
+    };
+  }
 }
