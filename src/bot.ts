@@ -163,10 +163,25 @@ export const robot = (app: Probot) => {
         try {
           const res = await chat?.codeReview(patch);
           if (!res.lgtm && !!res.review_comment) {
+            // Calculate safe position: use first non-header line of patch
+            // Patch format: starts with @@ line, then diff lines
+            const patchLines = patch.split('\n');
+            // Find first line after @@ header (safe position for comment)
+            let position = 1;
+            for (let i = 0; i < patchLines.length; i++) {
+              if (patchLines[i].startsWith('@@')) {
+                // Position is 1-indexed, and we want the line after header
+                position = i + 2; // +1 for index→line, +1 for line after header
+                break;
+              }
+            }
+            // Ensure position is within valid range
+            position = Math.min(position, patchLines.length);
+
             ress.push({
               path: file.filename,
               body: res.review_comment,
-              position: patch.split('\n').length - 1,
+              position: position,
             })
           }
         } catch (e) {
