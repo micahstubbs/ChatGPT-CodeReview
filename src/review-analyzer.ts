@@ -86,15 +86,19 @@ export function analyzeReviewSeverity(reviewComment: string): {
   for (let i = 0; i < reviewComment.length; i++) {
     if (reviewComment[i] === '\n') {
       lineCount++;
+      // Early return if we've exceeded the limit (optimization)
+      if (lineCount > MAX_LINES) {
+        throw new Error(`Invalid input: reviewComment exceeds maximum of ${MAX_LINES} lines`);
+      }
     }
   }
   // If string doesn't end with newline, we need to count the last line
   // If it does end with newline, the newline count is already correct
   if (reviewComment.length > 0 && reviewComment[reviewComment.length - 1] !== '\n') {
     lineCount++;
-  }
-  if (lineCount > MAX_LINES) {
-    throw new Error(`Invalid input: reviewComment exceeds maximum of ${MAX_LINES} lines`);
+    if (lineCount > MAX_LINES) {
+      throw new Error(`Invalid input: reviewComment exceeds maximum of ${MAX_LINES} lines`);
+    }
   }
 
   const critical: string[] = [];
