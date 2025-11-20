@@ -5,6 +5,22 @@
 
 // Using native fetch (Node 18+) - types from @types/node
 
+/**
+ * Scoring configuration constants
+ * Extracted to module-level for maintainability and testability
+ */
+const SCORING_CONFIG = {
+  CRITICAL_BASE_WEIGHT: 30,
+  CRITICAL_THRESHOLD: 3,
+  // Softening factor: 5/30 = 0.1667 (approximately 16.67% reduction)
+  // Results in softened weight of 25 (30 - 5)
+  SOFTEN_FACTOR: 5 / 30,
+  WARNING_WEIGHT: 15,
+  SUGGESTION_WEIGHT: 5,
+  LGTM_BONUS: 10,
+  LGTM_WITH_CRITICALS_PENALTY: 10
+} as const;
+
 export interface ReviewMetrics {
   totalReviews: number;
   criticalIssues: number;
@@ -148,23 +164,21 @@ export function calculateQualityScore(
 
   // Calculate critical penalty with diminishing returns built in
   // First 3 criticals: full penalty (30 points each)
-  // Additional criticals: softened penalty (83% of base = 25 points each)
+  // Additional criticals: softened penalty (25 points each - 16.67% reduction)
   // This prevents unfairly harsh scoring when multiple related issues exist
-  const CRITICAL_BASE_WEIGHT = 30;
-  const CRITICAL_THRESHOLD = 3;
-  const SOFTEN_FACTOR = 0.17; // 17% reduction from base weight
-  // Derive softened weight and round for integer scores
-  const CRITICAL_SOFTENED_WEIGHT = Math.round(CRITICAL_BASE_WEIGHT * (1 - SOFTEN_FACTOR));
-
   const criticalCount = severity.critical.length;
+  const CRITICAL_SOFTENED_WEIGHT = Math.round(
+    SCORING_CONFIG.CRITICAL_BASE_WEIGHT * (1 - SCORING_CONFIG.SOFTEN_FACTOR)
+  );
+
   const criticalPenalty =
-    Math.min(criticalCount, CRITICAL_THRESHOLD) * CRITICAL_BASE_WEIGHT +
-    Math.max(0, criticalCount - CRITICAL_THRESHOLD) * CRITICAL_SOFTENED_WEIGHT;
+    Math.min(criticalCount, SCORING_CONFIG.CRITICAL_THRESHOLD) * SCORING_CONFIG.CRITICAL_BASE_WEIGHT +
+    Math.max(0, criticalCount - SCORING_CONFIG.CRITICAL_THRESHOLD) * CRITICAL_SOFTENED_WEIGHT;
 
   // Deduct points based on issues found with severity weighting
   score -= criticalPenalty; // Critical issues with diminishing returns
-  score -= severity.warnings.length * 15; // Warnings: -15 points each
-  score -= severity.suggestions.length * 5; // Suggestions: -5 points each
+  score -= severity.warnings.length * SCORING_CONFIG.WARNING_WEIGHT;
+  score -= severity.suggestions.length * SCORING_CONFIG.SUGGESTION_WEIGHT;
 
   // LGTM bonus - ONLY if reviewer is verified and authorized
   // SECURITY: Never trust LGTM from parsed comment content alone
@@ -173,12 +187,12 @@ export function calculateQualityScore(
     : false; // Default to false if no auth provided
 
   if (isAuthorizedLgtm && severity.critical.length === 0) {
-    score = Math.min(100, score + 10);
+    score = Math.min(100, score + SCORING_CONFIG.LGTM_BONUS);
   }
 
   // Penalty for LGTM with critical issues (authorized reviewer made a mistake)
   if (isAuthorizedLgtm && severity.critical.length > 0) {
-    score -= 10;
+    score -= SCORING_CONFIG.LGTM_WITH_CRITICALS_PENALTY;
   }
 
   // Ensure score is in valid range
