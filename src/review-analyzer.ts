@@ -287,6 +287,11 @@ export function calculateQualityScore(
 export function aggregateReviewMetrics(
   reviews: Array<{ lgtm: boolean; reviewComment: string; reviewTime: number }>
 ): ReviewMetrics {
+  // Input validation (Issue #9)
+  if (!Array.isArray(reviews)) {
+    throw new TypeError('Invalid input: reviews must be an array');
+  }
+
   let criticalIssues = 0;
   let warnings = 0;
   let suggestions = 0;
@@ -294,6 +299,15 @@ export function aggregateReviewMetrics(
   let totalTime = 0;
 
   for (const review of reviews) {
+    // Validate reviewTime is a finite number
+    if (!Number.isFinite(review.reviewTime)) {
+      throw new TypeError(
+        `Invalid input: reviewTime must be a finite number. ` +
+        `Received ${typeof review.reviewTime}: ${String(review.reviewTime)}`
+      );
+    }
+
+    // analyzeReviewSeverity validates reviewComment (Issue #15)
     const severity = analyzeReviewSeverity(review.reviewComment);
     criticalIssues += severity.critical.length;
     warnings += severity.warnings.length;
