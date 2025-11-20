@@ -179,15 +179,17 @@ export const robot = (app: Probot) => {
             // Ensure position is within valid range
             position = Math.min(position, patchLines.length);
 
-            // Format comment using formatter if structured data exists
+            // Format comment using formatter if structured data exists and format is enabled
             let commentBody: string;
-            if (res.issues && res.issues.length >= 0) {
+            const useStructuredFormat = process.env.COMMENT_FORMAT !== 'legacy';
+
+            if (useStructuredFormat && res.issues && res.issues.length >= 0) {
               commentBody = formatReviewComment({
                 issues: res.issues,
                 details: res.details || res.review_comment,
               });
             } else {
-              // Fall back to legacy format for backward compatibility
+              // Fall back to legacy format
               commentBody = res.review_comment;
             }
 

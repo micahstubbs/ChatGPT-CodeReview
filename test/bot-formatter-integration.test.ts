@@ -50,4 +50,36 @@ describe('Bot formatter integration', () => {
 
     expect(commentBody).toBe('Plain old comment');
   });
+
+  test('should respect COMMENT_FORMAT environment variable', () => {
+    const reviewData = {
+      lgtm: false,
+      review_comment: 'Legacy comment',
+      issues: [{ severity: 'warning' as const, message: 'Minor issue' }],
+      details: 'Details here',
+    };
+
+    // Test with COMMENT_FORMAT=structured
+    process.env.COMMENT_FORMAT = 'structured';
+    let useStructured = process.env.COMMENT_FORMAT !== 'legacy';
+
+    let commentBody = useStructured
+      ? formatReviewComment({ issues: reviewData.issues, details: reviewData.details })
+      : reviewData.review_comment;
+
+    expect(commentBody).toContain('## Code Review Summary');
+
+    // Test with COMMENT_FORMAT=legacy
+    process.env.COMMENT_FORMAT = 'legacy';
+    useStructured = process.env.COMMENT_FORMAT !== 'legacy';
+
+    commentBody = useStructured
+      ? formatReviewComment({ issues: reviewData.issues, details: reviewData.details })
+      : reviewData.review_comment;
+
+    expect(commentBody).toBe('Legacy comment');
+
+    // Clean up
+    delete process.env.COMMENT_FORMAT;
+  });
 });
