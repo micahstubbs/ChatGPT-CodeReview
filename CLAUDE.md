@@ -213,6 +213,7 @@ When working on significant features or fixes:
 3. Checkout branch using the naming convention above
 4. Implement changes following the design
 5. Create PR when complete
+6. Open the PR in the user's default browser
 
 ## Important Notes
 
