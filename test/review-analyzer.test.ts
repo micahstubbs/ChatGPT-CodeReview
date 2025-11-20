@@ -35,7 +35,7 @@ describe('review-analyzer', () => {
       );
 
       expect(auth).toHaveProperty('verifiedAt');
-      expect((auth as any).verifiedAt).toBeInstanceOf(Date);
+      expect(auth.verifiedAt).toBeInstanceOf(Date);
     });
 
     test('ReviewerAuth should NOT have authToken field', async () => {
@@ -132,7 +132,7 @@ describe('review-analyzer', () => {
         'fake-token'
       );
 
-      expect((auth as any).verifiedAt).toBeInstanceOf(Date);
+      expect(auth.verifiedAt).toBeInstanceOf(Date);
     });
 
     test('verifyReviewerAuthorization returns isVerified:true for valid collaborator', async () => {
@@ -264,7 +264,7 @@ describe('review-analyzer', () => {
         'fake-token'
       );
 
-      expect((auth as any).verifiedAt).toBeInstanceOf(Date);
+      expect(auth.verifiedAt).toBeInstanceOf(Date);
     });
   });
 });
