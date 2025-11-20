@@ -3,29 +3,34 @@
  * Phase 1: Critical Security Fixes (#25, #26, #14)
  */
 
+// Mock node-fetch module BEFORE importing review-analyzer
+jest.mock('node-fetch');
+
 import {
   ReviewerAuth,
   calculateQualityScore,
   verifyReviewerAuthorization
 } from '../src/review-analyzer';
+import fetch from 'node-fetch';
 
-// Type augmentation for global fetch mock
-declare global {
-  var fetch: jest.Mock;
-}
+const mockFetch = fetch as jest.MockedFunction<typeof fetch>;
 
 describe('review-analyzer', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   describe('Issue #26: ReviewerAuth interface (PAT exposure)', () => {
     test('ReviewerAuth should have verifiedAt field', async () => {
       // Mock fetch to return successful collaborator check
-      global.fetch = jest.fn().mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: true,
         status: 200,
         json: async () => ({
           permission: 'write',
           user: { login: 'test-user' }
         })
-      }) as jest.Mock;
+      } as any);
 
       const auth = await verifyReviewerAuthorization(
         'test-user',
@@ -39,14 +44,14 @@ describe('review-analyzer', () => {
     });
 
     test('ReviewerAuth should NOT have authToken field', async () => {
-      global.fetch = jest.fn().mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: true,
         status: 200,
         json: async () => ({
           permission: 'write',
           user: { login: 'test-user' }
         })
-      }) as jest.Mock;
+      } as any);
 
       const auth = await verifyReviewerAuthorization(
         'test-user',
@@ -59,14 +64,14 @@ describe('review-analyzer', () => {
     });
 
     test('verifyReviewerAuthorization should never return token in response', async () => {
-      global.fetch = jest.fn().mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: true,
         status: 200,
         json: async () => ({
           permission: 'admin',
           user: { login: 'admin-user' }
         })
-      }) as jest.Mock;
+      } as any);
 
       const auth = await verifyReviewerAuthorization(
         'admin-user',
@@ -85,11 +90,11 @@ describe('review-analyzer', () => {
   describe('Issue #25: 404 authorization bug', () => {
     test('verifyReviewerAuthorization returns isVerified:false on 404', async () => {
       // Mock GitHub API 404 response (user is not a collaborator)
-      global.fetch = jest.fn().mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: false,
         status: 404,
         statusText: 'Not Found'
-      }) as jest.Mock;
+      } as any);
 
       const auth = await verifyReviewerAuthorization(
         'non-collaborator',
@@ -102,11 +107,11 @@ describe('review-analyzer', () => {
     });
 
     test('verifyReviewerAuthorization returns hasWriteAccess:false on 404', async () => {
-      global.fetch = jest.fn().mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: false,
         status: 404,
         statusText: 'Not Found'
-      }) as jest.Mock;
+      } as any);
 
       const auth = await verifyReviewerAuthorization(
         'non-collaborator',
@@ -119,11 +124,11 @@ describe('review-analyzer', () => {
     });
 
     test('verifyReviewerAuthorization includes verifiedAt on 404', async () => {
-      global.fetch = jest.fn().mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: false,
         status: 404,
         statusText: 'Not Found'
-      }) as jest.Mock;
+      } as any);
 
       const auth = await verifyReviewerAuthorization(
         'non-collaborator',
@@ -136,14 +141,14 @@ describe('review-analyzer', () => {
     });
 
     test('verifyReviewerAuthorization returns isVerified:true for valid collaborator', async () => {
-      global.fetch = jest.fn().mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: true,
         status: 200,
         json: async () => ({
           permission: 'write',
           user: { login: 'collaborator' }
         })
-      }) as jest.Mock;
+      } as any);
 
       const auth = await verifyReviewerAuthorization(
         'collaborator',
@@ -241,7 +246,7 @@ describe('review-analyzer', () => {
   describe('Error handling', () => {
     test('verifyReviewerAuthorization returns isVerified:false on error', async () => {
       // Mock network error
-      global.fetch = jest.fn().mockRejectedValue(new Error('Network error')) as jest.Mock;
+      mockFetch.mockRejectedValue(new Error('Network error'));
 
       const auth = await verifyReviewerAuthorization(
         'test-user',
@@ -255,7 +260,7 @@ describe('review-analyzer', () => {
     });
 
     test('verifyReviewerAuthorization includes verifiedAt even on error', async () => {
-      global.fetch = jest.fn().mockRejectedValue(new Error('Network error')) as jest.Mock;
+      mockFetch.mockRejectedValue(new Error('Network error'));
 
       const auth = await verifyReviewerAuthorization(
         'test-user',
