@@ -85,16 +85,8 @@ export function analyzeReviewSeverity(reviewComment: string): {
   }
 
   // Check if input is empty or whitespace-only
-  // Don't use trim() to avoid allocating duplicate string on large inputs
-  let hasNonWhitespace = false;
-  for (let i = 0; i < reviewComment.length; i++) {
-    const char = reviewComment[i];
-    if (char !== ' ' && char !== '\t' && char !== '\n' && char !== '\r') {
-      hasNonWhitespace = true;
-      break;
-    }
-  }
-  if (!hasNonWhitespace) {
+  // Use regex \S to match all ECMAScript whitespace chars (including NBSP, form feed, etc.)
+  if (!/\S/.test(reviewComment)) {
     throw new Error('Invalid input: reviewComment cannot be empty');
   }
 
