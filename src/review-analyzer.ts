@@ -299,6 +299,14 @@ export function aggregateReviewMetrics(
   let totalTime = 0;
 
   for (const review of reviews) {
+    // Validate lgtm is a boolean
+    if (typeof review.lgtm !== 'boolean') {
+      throw new TypeError(
+        `Invalid input: lgtm must be a boolean. ` +
+        `Received ${typeof review.lgtm}: ${String(review.lgtm)}`
+      );
+    }
+
     // Validate reviewTime is a finite number
     if (!Number.isFinite(review.reviewTime)) {
       throw new TypeError(

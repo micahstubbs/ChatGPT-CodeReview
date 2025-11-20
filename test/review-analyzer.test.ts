@@ -1023,5 +1023,25 @@ CRITICAL: Another security issue`;
       expect(result.lgtmRate).toBe(0);
       expect(result.averageReviewTime).toBe(0);
     });
+
+    test('should reject review with non-boolean lgtm (string)', () => {
+      const reviews = [
+        { lgtm: 'true' as any, reviewComment: 'Looks good', reviewTime: 5 }
+      ];
+
+      expect(() => {
+        aggregateReviewMetrics(reviews);
+      }).toThrow(new TypeError('Invalid input: lgtm must be a boolean. Received string: true'));
+    });
+
+    test('should reject review with non-boolean lgtm (number)', () => {
+      const reviews = [
+        { lgtm: 1 as any, reviewComment: 'Looks good', reviewTime: 5 }
+      ];
+
+      expect(() => {
+        aggregateReviewMetrics(reviews);
+      }).toThrow(new TypeError('Invalid input: lgtm must be a boolean. Received number: 1'));
+    });
   });
 });
