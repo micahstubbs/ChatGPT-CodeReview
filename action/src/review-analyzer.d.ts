@@ -48,6 +48,7 @@ export interface ReviewerAuth {
  * Uses pattern matching and NLP techniques to categorize issues
  *
  * Issue #15: Input validation and ReDoS protection
+ * Issue #17: Deduplicates issues to prevent score gaming
  */
 export declare function analyzeReviewSeverity(reviewComment: string): {
     critical: string[];
