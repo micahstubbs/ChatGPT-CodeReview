@@ -46,6 +46,8 @@ export interface ReviewerAuth {
 /**
  * Analyzes review content to extract severity levels
  * Uses pattern matching and NLP techniques to categorize issues
+ *
+ * Issue #15: Input validation and ReDoS protection
  */
 export declare function analyzeReviewSeverity(reviewComment: string): {
     critical: string[];
@@ -54,7 +56,15 @@ export declare function analyzeReviewSeverity(reviewComment: string): {
 };
 /**
  * Calculates code quality score based on review metrics
- * Uses weighted scoring algorithm with adaptive thresholds
+ * Uses weighted scoring algorithm with diminishing returns on critical issues
+ *
+ * Scoring behavior:
+ * - Base weights: critical (30), warning (15), suggestion (5)
+ * - Diminishing returns: First 3 critical issues at full penalty (30 each),
+ *   additional critical issues softened to 25 each (16.67% reduction)
+ * - LGTM bonus (+10) only for authorized reviewers with zero critical issues
+ * - LGTM penalty (-10) for authorized reviewers who approve despite critical issues
+ * - Category thresholds: excellent (90+), good (70+), needs-improvement (50+), critical (<50)
  *
  * SECURITY: LGTM scoring requires verified reviewer authorization.
  * Do NOT trust LGTM from parsed comment content - require server-side
@@ -75,14 +85,21 @@ export declare function aggregateReviewMetrics(reviews: Array<{
     reviewTime: number;
 }>): ReviewMetrics;
 /**
+ * Clears the authorization cache
+ * Exported for testing purposes
+ */
+export declare function clearAuthCache(): void;
+/**
  * Verifies reviewer authorization from GitHub API
  * SECURITY: This function MUST query GitHub's API server-side to verify permissions.
  * Never trust client-provided authorization data.
  *
+ * Issue #29: Implements memoization to reduce API calls and avoid rate limits
+ *
  * @param githubLogin - Reviewer's GitHub login
  * @param repoOwner - Repository owner
  * @param repoName - Repository name
- * @param githubToken - GitHub API token with repo permissions
+ * @param githubToken - GitHub API token with repo permissions (never logged)
  * @returns Verified reviewer authorization
  *
  * @example

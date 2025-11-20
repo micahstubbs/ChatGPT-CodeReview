@@ -8,7 +8,8 @@ import {
   calculateQualityScore,
   verifyReviewerAuthorization,
   analyzeReviewSeverity,
-  aggregateReviewMetrics
+  aggregateReviewMetrics,
+  clearAuthCache
 } from '../src/review-analyzer';
 
 // Mock global fetch
@@ -20,6 +21,7 @@ globalThis.fetch = mockFetch as any;
 describe('review-analyzer', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    clearAuthCache(); // Issue #29: Clear cache between tests
   });
 
   afterAll(() => {
@@ -1042,6 +1044,75 @@ CRITICAL: Another security issue`;
       expect(() => {
         aggregateReviewMetrics(reviews);
       }).toThrow(new TypeError('Invalid input: lgtm must be a boolean. Received number: 1'));
+    });
+  });
+
+  describe('Issue #29: Rate limiting and memoization', () => {
+    test('should cache authorization results for repeated calls', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          permission: 'write',
+          user: { login: 'test-user' }
+        })
+      } as any);
+
+      // First call
+      const auth1 = await verifyReviewerAuthorization('test-user', 'owner', 'repo', 'token');
+      expect(auth1.isVerified).toBe(true);
+
+      // Second call should use cache (no additional fetch)
+      mockFetch.mockClear();
+      const auth2 = await verifyReviewerAuthorization('test-user', 'owner', 'repo', 'token');
+      expect(auth2.isVerified).toBe(true);
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    test('should not leak token in any logs', async () => {
+      const consoleLog = jest.spyOn(console, 'log');
+      const consoleError = jest.spyOn(console, 'error');
+
+      mockFetch.mockRejectedValue(new Error('Network error'));
+
+      await verifyReviewerAuthorization('test', 'owner', 'repo', 'secret-token-123');
+
+      // Check console output doesn't contain token
+      const allLogs = [
+        ...consoleLog.mock.calls.map(c => JSON.stringify(c)),
+        ...consoleError.mock.calls.map(c => JSON.stringify(c))
+      ].join(' ');
+
+      expect(allLogs).not.toContain('secret-token-123');
+
+      consoleLog.mockRestore();
+      consoleError.mockRestore();
+    });
+
+    test('cache should expire after TTL', async () => {
+      jest.useFakeTimers();
+
+      mockFetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          permission: 'write',
+          user: { login: 'test-user' }
+        })
+      } as any);
+
+      // First call
+      await verifyReviewerAuthorization('test-user', 'owner', 'repo', 'token');
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+
+      // Advance time past TTL (5 minutes)
+      jest.advanceTimersByTime(6 * 60 * 1000);
+
+      // Should make new API call after TTL
+      await verifyReviewerAuthorization('test-user', 'owner', 'repo', 'token');
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+
+      jest.useRealTimers();
     });
   });
 });
