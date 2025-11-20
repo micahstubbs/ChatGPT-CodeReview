@@ -40,16 +40,23 @@ export class Chat {
         ? `Answer me in ${process.env.LANGUAGE},`
         : '';
 
-    const userPrompt = process.env.PROMPT || 'Please review the following code patch. Focus on potential bugs, risks, and improvement suggestions.';
+    const basePrompt = process.env.PROMPT || 'Review the following code patch. Focus on potential bugs, risks, and improvements.';
 
-    const jsonFormatRequirement = '\nProvide your feedback in a strict JSON format with the following structure:\n' +
+    // Add conciseness instruction
+    const styleInstruction = '\nBe concise. Prioritize clarity over perfect grammar.\n';
+
+    const jsonFormatRequirement = '\nProvide your feedback in strict JSON format:\n' +
         '{\n' +
-        '  "lgtm": boolean, // true if the code looks good to merge, false if there are concerns\n' +
-        '  "review_comment": string // Your detailed review comments. You can use markdown syntax in this string, but the overall response must be a valid JSON\n' +
+        '  "lgtm": boolean,\n' +
+        '  "review_comment": string,\n' +
+        '  "issues": [\n' +
+        '    {"severity": "critical" | "warning" | "style" | "suggestion", "message": "brief issue description"}\n' +
+        '  ],\n' +
+        '  "details": string // detailed analysis with explanations\n' +
         '}\n' +
-        'Ensure your response is a valid JSON object.\n';
+        'List all issues concisely in the issues array. Put detailed explanations in the details field.\n';
 
-    return `${userPrompt}${jsonFormatRequirement} ${answerLanguage}:
+    return `${basePrompt}${styleInstruction}${jsonFormatRequirement} ${answerLanguage}:
     ${patch}
     `;
   };
@@ -58,11 +65,13 @@ export class Chat {
   private async codeReviewWithResponsesAPI(
     patch: string,
     model: string
-  ): Promise<{ lgtm: boolean, review_comment: string }> {
+  ): Promise<{ lgtm: boolean; review_comment: string; issues: any[]; details: string }> {
     if (!patch) {
       return {
         lgtm: true,
-        review_comment: ""
+        review_comment: "",
+        issues: [],
+        details: "",
       };
     }
 
@@ -119,7 +128,12 @@ export class Chat {
           if (textContent && textContent.text) {
             try {
               const parsed = JSON.parse(textContent.text);
-              return parsed as { lgtm: boolean, review_comment: string };
+              return {
+                lgtm: parsed.lgtm || false,
+                review_comment: parsed.review_comment || "",
+                issues: parsed.issues || [],
+                details: parsed.details || "",
+              };
             } catch (parseError) {
               // JSON parse failed
             }
@@ -131,12 +145,19 @@ export class Chat {
       if (res.output_text) {
         try {
           const parsed = JSON.parse(res.output_text);
-          return parsed as { lgtm: boolean, review_comment: string };
+          return {
+            lgtm: parsed.lgtm || false,
+            review_comment: parsed.review_comment || "",
+            issues: parsed.issues || [],
+            details: parsed.details || "",
+          };
         } catch (parseError) {
           // JSON parse failed, return as-is
           return {
             lgtm: false,
-            review_comment: res.output_text
+            review_comment: res.output_text,
+            issues: [],
+            details: res.output_text,
           };
         }
       }
@@ -144,7 +165,9 @@ export class Chat {
       // Final fallback if output format is unexpected
       return {
         lgtm: false,
-        review_comment: "Error: Unable to parse Responses API output"
+        review_comment: "Error: Unable to parse Responses API output",
+        issues: [],
+        details: "Error: Unable to parse Responses API output",
       };
     } catch (e) {
       console.timeEnd('code-review-responses-api cost');
@@ -156,11 +179,13 @@ export class Chat {
   private async codeReviewWithChatAPI(
     patch: string,
     model: string
-  ): Promise<{ lgtm: boolean, review_comment: string }> {
+  ): Promise<{ lgtm: boolean; review_comment: string; issues: any[]; details: string }> {
     if (!patch) {
       return {
         lgtm: true,
-        review_comment: ""
+        review_comment: "",
+        issues: [],
+        details: "",
       };
     }
 
@@ -188,26 +213,43 @@ export class Chat {
     if (res.choices.length) {
       try {
         const json = JSON.parse(res.choices[0].message.content || "");
-        return json;
+        // Ensure issues and details exist with defaults
+        return {
+          lgtm: json.lgtm || false,
+          review_comment: json.review_comment || "",
+          issues: json.issues || [],
+          details: json.details || json.review_comment || "",
+        };
       } catch (e) {
         return {
           lgtm: false,
-          review_comment: res.choices[0].message.content || ""
+          review_comment: res.choices[0].message.content || "",
+          issues: [],
+          details: res.choices[0].message.content || "",
         };
       }
     }
 
     return {
       lgtm: true,
-      review_comment: ""
+      review_comment: "",
+      issues: [],
+      details: "",
     };
   }
 
-  public codeReview = async (patch: string): Promise<{ lgtm: boolean, review_comment: string }> => {
+  public codeReview = async (patch: string): Promise<{
+    lgtm: boolean;
+    review_comment: string;
+    issues: any[];
+    details: string;
+  }> => {
     if (!patch) {
       return {
         lgtm: true,
-        review_comment: ""
+        review_comment: "",
+        issues: [],
+        details: "",
       };
     }
 
