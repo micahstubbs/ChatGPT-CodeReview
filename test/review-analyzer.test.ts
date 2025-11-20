@@ -7,7 +7,8 @@ import {
   ReviewerAuth,
   calculateQualityScore,
   verifyReviewerAuthorization,
-  analyzeReviewSeverity
+  analyzeReviewSeverity,
+  aggregateReviewMetrics
 } from '../src/review-analyzer';
 
 // Mock global fetch
@@ -956,6 +957,91 @@ CRITICAL: Another security issue`;
         expect(result.breakdown.performance).toBe(100);
         expect(result.breakdown.testability).toBe(100);
       });
+    });
+  });
+
+  describe('Issue #9: Input validation for aggregateReviewMetrics', () => {
+    test('should reject non-array input', () => {
+      expect(() => {
+        aggregateReviewMetrics('not an array' as any);
+      }).toThrow(new TypeError('Invalid input: reviews must be an array'));
+    });
+
+    test('should reject null input', () => {
+      expect(() => {
+        aggregateReviewMetrics(null as any);
+      }).toThrow(new TypeError('Invalid input: reviews must be an array'));
+    });
+
+    test('should reject review with non-finite reviewTime (NaN)', () => {
+      const reviews = [
+        { lgtm: false, reviewComment: 'Looks good', reviewTime: NaN }
+      ];
+
+      expect(() => {
+        aggregateReviewMetrics(reviews);
+      }).toThrow(new TypeError('Invalid input: reviewTime must be a finite number. Received number: NaN'));
+    });
+
+    test('should reject review with non-finite reviewTime (Infinity)', () => {
+      const reviews = [
+        { lgtm: false, reviewComment: 'Looks good', reviewTime: Infinity }
+      ];
+
+      expect(() => {
+        aggregateReviewMetrics(reviews);
+      }).toThrow(new TypeError('Invalid input: reviewTime must be a finite number. Received number: Infinity'));
+    });
+
+    test('should reject review with non-numeric reviewTime', () => {
+      const reviews = [
+        { lgtm: false, reviewComment: 'Looks good', reviewTime: '123' as any }
+      ];
+
+      expect(() => {
+        aggregateReviewMetrics(reviews);
+      }).toThrow(new TypeError('Invalid input: reviewTime must be a finite number. Received string: 123'));
+    });
+
+    test('should accept valid reviews array', () => {
+      const reviews = [
+        { lgtm: true, reviewComment: 'Looks good', reviewTime: 5 },
+        { lgtm: false, reviewComment: 'Critical bug found', reviewTime: 10 }
+      ];
+
+      const result = aggregateReviewMetrics(reviews);
+
+      expect(result.totalReviews).toBe(2);
+      expect(result.lgtmRate).toBe(0.5);
+      expect(result.averageReviewTime).toBe(7.5);
+    });
+
+    test('should handle empty array gracefully', () => {
+      const result = aggregateReviewMetrics([]);
+
+      expect(result.totalReviews).toBe(0);
+      expect(result.lgtmRate).toBe(0);
+      expect(result.averageReviewTime).toBe(0);
+    });
+
+    test('should reject review with non-boolean lgtm (string)', () => {
+      const reviews = [
+        { lgtm: 'true' as any, reviewComment: 'Looks good', reviewTime: 5 }
+      ];
+
+      expect(() => {
+        aggregateReviewMetrics(reviews);
+      }).toThrow(new TypeError('Invalid input: lgtm must be a boolean. Received string: true'));
+    });
+
+    test('should reject review with non-boolean lgtm (number)', () => {
+      const reviews = [
+        { lgtm: 1 as any, reviewComment: 'Looks good', reviewTime: 5 }
+      ];
+
+      expect(() => {
+        aggregateReviewMetrics(reviews);
+      }).toThrow(new TypeError('Invalid input: lgtm must be a boolean. Received number: 1'));
     });
   });
 });
