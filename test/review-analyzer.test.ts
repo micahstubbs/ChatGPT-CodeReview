@@ -651,6 +651,9 @@ describe('review-analyzer', () => {
       // SECURITY: Don't accept non-boolean values for security-sensitive lgtm flag
       expect(() => {
         calculateQualityScore(reviewComment, "true" as any, validAuth);
+      }).toThrow(TypeError);
+      expect(() => {
+        calculateQualityScore(reviewComment, "true" as any, validAuth);
       }).toThrow('Invalid input: lgtm parameter must be a boolean');
     });
 
@@ -666,6 +669,9 @@ describe('review-analyzer', () => {
       // SECURITY: Don't accept non-boolean values for security-sensitive lgtm flag
       expect(() => {
         calculateQualityScore(reviewComment, 1 as any, validAuth);
+      }).toThrow(TypeError);
+      expect(() => {
+        calculateQualityScore(reviewComment, 1 as any, validAuth);
       }).toThrow('Invalid input: lgtm parameter must be a boolean');
     });
 
@@ -673,6 +679,9 @@ describe('review-analyzer', () => {
       const reviewComment = 'Needs work';
 
       // SECURITY: Reject non-boolean even if falsy
+      expect(() => {
+        calculateQualityScore(reviewComment, 0 as any);
+      }).toThrow(TypeError);
       expect(() => {
         calculateQualityScore(reviewComment, 0 as any);
       }).toThrow('Invalid input: lgtm parameter must be a boolean');
@@ -684,6 +693,9 @@ describe('review-analyzer', () => {
       // SECURITY: Reject non-boolean even if falsy
       expect(() => {
         calculateQualityScore(reviewComment, "" as any);
+      }).toThrow(TypeError);
+      expect(() => {
+        calculateQualityScore(reviewComment, "" as any);
       }).toThrow('Invalid input: lgtm parameter must be a boolean');
     });
 
@@ -693,6 +705,22 @@ describe('review-analyzer', () => {
       // SECURITY: Reject non-boolean even if falsy
       expect(() => {
         calculateQualityScore(reviewComment, undefined as any);
+      }).toThrow(TypeError);
+      expect(() => {
+        calculateQualityScore(reviewComment, undefined as any);
+      }).toThrow('Invalid input: lgtm parameter must be a boolean');
+    });
+
+    test('calculateQualityScore should reject non-boolean lgtm (BigInt) without serialization error', () => {
+      const reviewComment = 'Needs work';
+
+      // SECURITY: Reject BigInt without JSON.stringify throwing TypeError
+      // Uses String() for safe serialization
+      expect(() => {
+        calculateQualityScore(reviewComment, BigInt(1) as any);
+      }).toThrow(TypeError);
+      expect(() => {
+        calculateQualityScore(reviewComment, BigInt(1) as any);
       }).toThrow('Invalid input: lgtm parameter must be a boolean');
     });
   });

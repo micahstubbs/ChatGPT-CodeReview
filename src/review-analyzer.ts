@@ -188,9 +188,9 @@ export function calculateQualityScore(
 ): CodeQualityScore {
   // SECURITY: Validate lgtm parameter type before making security decisions
   if (typeof lgtm !== 'boolean') {
-    throw new Error(
+    throw new TypeError(
       'Invalid input: lgtm parameter must be a boolean. ' +
-      `Received ${typeof lgtm}: ${JSON.stringify(lgtm)}`
+      `Received ${typeof lgtm}: ${String(lgtm)}`
     );
   }
 
