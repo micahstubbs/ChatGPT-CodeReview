@@ -10,7 +10,7 @@ import {
   analyzeReviewSeverity,
   aggregateReviewMetrics,
   clearAuthCache,
-} from "../src/review-analyzer";
+} from '../src/review-analyzer';
 
 // Mock global fetch
 const mockFetch = jest.fn() as jest.MockedFunction<typeof fetch>;
@@ -18,7 +18,7 @@ const originalFetch = globalThis.fetch;
 global.fetch = mockFetch as any;
 globalThis.fetch = mockFetch as any;
 
-describe("review-analyzer", () => {
+describe('review-analyzer', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     clearAuthCache(); // Issue #29: Clear cache between tests
@@ -30,186 +30,169 @@ describe("review-analyzer", () => {
     global.fetch = originalFetch as any;
   });
 
-  describe("Issue #26: ReviewerAuth interface (PAT exposure)", () => {
-    test("ReviewerAuth should have verifiedAt field", async () => {
+  describe('Issue #26: ReviewerAuth interface (PAT exposure)', () => {
+    test('ReviewerAuth should have verifiedAt field', async () => {
       // Mock fetch to return successful collaborator check
       mockFetch.mockResolvedValue({
         ok: true,
         status: 200,
         json: async () => ({
-          permission: "write",
-          user: { login: "test-user" },
+          permission: 'write',
+          user: { login: 'test-user' },
         }),
       } as any);
 
-      const auth = await verifyReviewerAuthorization(
-        "test-user",
-        "owner",
-        "repo",
-        "fake-token"
-      );
+      const auth = await verifyReviewerAuthorization('test-user', 'owner', 'repo', 'fake-token');
 
-      expect(auth).toHaveProperty("verifiedAt");
+      expect(auth).toHaveProperty('verifiedAt');
       expect(auth.verifiedAt).toBeInstanceOf(Date);
     });
 
-    test("ReviewerAuth should NOT have authToken field", async () => {
+    test('ReviewerAuth should NOT have authToken field', async () => {
       mockFetch.mockResolvedValue({
         ok: true,
         status: 200,
         json: async () => ({
-          permission: "write",
-          user: { login: "test-user" },
+          permission: 'write',
+          user: { login: 'test-user' },
         }),
       } as any);
 
-      const auth = await verifyReviewerAuthorization(
-        "test-user",
-        "owner",
-        "repo",
-        "fake-token"
-      );
+      const auth = await verifyReviewerAuthorization('test-user', 'owner', 'repo', 'fake-token');
 
-      expect(auth).not.toHaveProperty("authToken");
+      expect(auth).not.toHaveProperty('authToken');
     });
 
-    test("verifyReviewerAuthorization should never return token in response", async () => {
+    test('verifyReviewerAuthorization should never return token in response', async () => {
       mockFetch.mockResolvedValue({
         ok: true,
         status: 200,
         json: async () => ({
-          permission: "admin",
-          user: { login: "admin-user" },
+          permission: 'admin',
+          user: { login: 'admin-user' },
         }),
       } as any);
 
       const auth = await verifyReviewerAuthorization(
-        "admin-user",
-        "owner",
-        "repo",
-        "secret-token-123"
+        'admin-user',
+        'owner',
+        'repo',
+        'secret-token-123'
       );
 
       // Verify response doesn't contain the token
       const authString = JSON.stringify(auth);
-      expect(authString).not.toContain("secret-token-123");
-      expect(auth).not.toHaveProperty("authToken");
+      expect(authString).not.toContain('secret-token-123');
+      expect(auth).not.toHaveProperty('authToken');
     });
   });
 
-  describe("Issue #25: 404 authorization bug", () => {
-    test("verifyReviewerAuthorization returns isVerified:false on 404", async () => {
+  describe('Issue #25: 404 authorization bug', () => {
+    test('verifyReviewerAuthorization returns isVerified:false on 404', async () => {
       // Mock GitHub API 404 response (user is not a collaborator)
       mockFetch.mockResolvedValue({
         ok: false,
         status: 404,
-        statusText: "Not Found",
+        statusText: 'Not Found',
       } as any);
 
       const auth = await verifyReviewerAuthorization(
-        "non-collaborator",
-        "owner",
-        "repo",
-        "fake-token"
+        'non-collaborator',
+        'owner',
+        'repo',
+        'fake-token'
       );
 
       expect(auth.isVerified).toBe(false);
     });
 
-    test("verifyReviewerAuthorization returns hasWriteAccess:false on 404", async () => {
+    test('verifyReviewerAuthorization returns hasWriteAccess:false on 404', async () => {
       mockFetch.mockResolvedValue({
         ok: false,
         status: 404,
-        statusText: "Not Found",
+        statusText: 'Not Found',
       } as any);
 
       const auth = await verifyReviewerAuthorization(
-        "non-collaborator",
-        "owner",
-        "repo",
-        "fake-token"
+        'non-collaborator',
+        'owner',
+        'repo',
+        'fake-token'
       );
 
       expect(auth.hasWriteAccess).toBe(false);
     });
 
-    test("verifyReviewerAuthorization includes verifiedAt on 404", async () => {
+    test('verifyReviewerAuthorization includes verifiedAt on 404', async () => {
       mockFetch.mockResolvedValue({
         ok: false,
         status: 404,
-        statusText: "Not Found",
+        statusText: 'Not Found',
       } as any);
 
       const auth = await verifyReviewerAuthorization(
-        "non-collaborator",
-        "owner",
-        "repo",
-        "fake-token"
+        'non-collaborator',
+        'owner',
+        'repo',
+        'fake-token'
       );
 
       expect(auth.verifiedAt).toBeInstanceOf(Date);
     });
 
-    test("verifyReviewerAuthorization returns isVerified:true for valid collaborator", async () => {
+    test('verifyReviewerAuthorization returns isVerified:true for valid collaborator', async () => {
       mockFetch.mockResolvedValue({
         ok: true,
         status: 200,
         json: async () => ({
-          permission: "write",
-          user: { login: "collaborator" },
+          permission: 'write',
+          user: { login: 'collaborator' },
         }),
       } as any);
 
-      const auth = await verifyReviewerAuthorization(
-        "collaborator",
-        "owner",
-        "repo",
-        "fake-token"
-      );
+      const auth = await verifyReviewerAuthorization('collaborator', 'owner', 'repo', 'fake-token');
 
       expect(auth.isVerified).toBe(true);
       expect(auth.hasWriteAccess).toBe(true);
     });
   });
 
-  describe("Issue #14: LGTM authorization enforcement", () => {
-    test("calculateQualityScore throws error when lgtm=true without reviewerAuth", () => {
-      const reviewComment = "Looks good!";
+  describe('Issue #14: LGTM authorization enforcement', () => {
+    test('calculateQualityScore throws error when lgtm=true without reviewerAuth', () => {
+      const reviewComment = 'Looks good!';
 
       expect(() => {
         calculateQualityScore(reviewComment, true);
-      }).toThrow(
-        "SECURITY ERROR: LGTM requires verified reviewer authorization"
-      );
+      }).toThrow('SECURITY ERROR: LGTM requires verified reviewer authorization');
     });
 
-    test("calculateQualityScore throws error when lgtm=true with isVerified=false", () => {
-      const reviewComment = "Looks good!";
+    test('calculateQualityScore throws error when lgtm=true with isVerified=false', () => {
+      const reviewComment = 'Looks good!';
       const unverifiedAuth = {
         isVerified: false,
-        login: "test-user",
+        login: 'test-user',
         hasWriteAccess: false,
         verifiedAt: new Date(),
       } as any as ReviewerAuth;
 
       expect(() => {
         calculateQualityScore(reviewComment, true, unverifiedAuth);
-      }).toThrow("SECURITY ERROR: LGTM requires isVerified=true");
+      }).toThrow('SECURITY ERROR: LGTM requires isVerified=true');
     });
 
-    test("calculateQualityScore accepts lgtm=false without reviewerAuth", () => {
-      const reviewComment = "Please fix the security issues";
+    test('calculateQualityScore accepts lgtm=false without reviewerAuth', () => {
+      const reviewComment = 'Please fix the security issues';
 
       expect(() => {
         calculateQualityScore(reviewComment, false);
       }).not.toThrow();
     });
 
-    test("calculateQualityScore accepts lgtm=true with valid reviewerAuth", () => {
-      const reviewComment = "Looks good!";
+    test('calculateQualityScore accepts lgtm=true with valid reviewerAuth', () => {
+      const reviewComment = 'Looks good!';
       const validAuth = {
         isVerified: true,
-        login: "reviewer",
+        login: 'reviewer',
         hasWriteAccess: true,
         verifiedAt: new Date(),
       } as any as ReviewerAuth;
@@ -219,43 +202,35 @@ describe("review-analyzer", () => {
       }).not.toThrow();
     });
 
-    test("LGTM bonus only applies with verified authorization", () => {
+    test('LGTM bonus only applies with verified authorization', () => {
       // Use a review with minor suggestions so score isn't already at 100
-      const reviewComment = "Looks good! Consider adding more test coverage.";
+      const reviewComment = 'Looks good! Consider adding more test coverage.';
       const validAuth = {
         isVerified: true,
-        login: "reviewer",
+        login: 'reviewer',
         hasWriteAccess: true,
         verifiedAt: new Date(),
       } as any as ReviewerAuth;
 
-      const scoreWithAuth = calculateQualityScore(
-        reviewComment,
-        true,
-        validAuth
-      );
+      const scoreWithAuth = calculateQualityScore(reviewComment, true, validAuth);
       const scoreWithoutLgtm = calculateQualityScore(reviewComment, false);
 
       // LGTM with valid auth should give bonus (higher score)
       expect(scoreWithAuth.score).toBeGreaterThan(scoreWithoutLgtm.score);
     });
 
-    test("LGTM bonus requires both verified and write access", () => {
-      const reviewComment = "Looks good!";
+    test('LGTM bonus requires both verified and write access', () => {
+      const reviewComment = 'Looks good!';
 
       // Verified but no write access
       const authNoWrite = {
         isVerified: true,
-        login: "read-only-user",
+        login: 'read-only-user',
         hasWriteAccess: false,
         verifiedAt: new Date(),
       } as any as ReviewerAuth;
 
-      const scoreNoWrite = calculateQualityScore(
-        reviewComment,
-        true,
-        authNoWrite
-      );
+      const scoreNoWrite = calculateQualityScore(reviewComment, true, authNoWrite);
       const scoreBaseline = calculateQualityScore(reviewComment, false);
 
       // No write access = no LGTM bonus
@@ -263,37 +238,27 @@ describe("review-analyzer", () => {
     });
   });
 
-  describe("Error handling", () => {
-    test("verifyReviewerAuthorization returns isVerified:false on error", async () => {
+  describe('Error handling', () => {
+    test('verifyReviewerAuthorization returns isVerified:false on error', async () => {
       // Mock network error
-      mockFetch.mockRejectedValue(new Error("Network error"));
+      mockFetch.mockRejectedValue(new Error('Network error'));
 
-      const auth = await verifyReviewerAuthorization(
-        "test-user",
-        "owner",
-        "repo",
-        "fake-token"
-      );
+      const auth = await verifyReviewerAuthorization('test-user', 'owner', 'repo', 'fake-token');
 
       expect(auth.isVerified).toBe(false);
       expect(auth.hasWriteAccess).toBe(false);
     });
 
-    test("verifyReviewerAuthorization includes verifiedAt even on error", async () => {
-      mockFetch.mockRejectedValue(new Error("Network error"));
+    test('verifyReviewerAuthorization includes verifiedAt even on error', async () => {
+      mockFetch.mockRejectedValue(new Error('Network error'));
 
-      const auth = await verifyReviewerAuthorization(
-        "test-user",
-        "owner",
-        "repo",
-        "fake-token"
-      );
+      const auth = await verifyReviewerAuthorization('test-user', 'owner', 'repo', 'fake-token');
 
       expect(auth.verifiedAt).toBeInstanceOf(Date);
     });
   });
 
-  describe("Issue #12 & #19: Fix diminishing returns and weight-proportional softening", () => {
+  describe('Issue #12 & #19: Fix diminishing returns and weight-proportional softening', () => {
     // Helper to generate critical issues
     // Issue #17: Generate unique issues to work with deduplication
     const generateCriticalIssues = (count: number): string => {
@@ -301,34 +266,34 @@ describe("review-analyzer", () => {
       for (let i = 0; i < count; i++) {
         issues.push(`Critical bug found in component ${i + 1}`);
       }
-      return issues.join("\n");
+      return issues.join('\n');
     };
 
-    test("0 critical issues should score 100", () => {
-      const review = "Looks good overall";
+    test('0 critical issues should score 100', () => {
+      const review = 'Looks good overall';
       const score = calculateQualityScore(review, false);
       expect(score.score).toBe(100);
     });
 
-    test("1 critical issue should score 70 (100 - 30)", () => {
+    test('1 critical issue should score 70 (100 - 30)', () => {
       const review = generateCriticalIssues(1);
       const score = calculateQualityScore(review, false);
       expect(score.score).toBe(70);
     });
 
-    test("2 critical issues should score 40 (100 - 60)", () => {
+    test('2 critical issues should score 40 (100 - 60)', () => {
       const review = generateCriticalIssues(2);
       const score = calculateQualityScore(review, false);
       expect(score.score).toBe(40);
     });
 
-    test("3 critical issues should score 10 (100 - 90)", () => {
+    test('3 critical issues should score 10 (100 - 90)', () => {
       const review = generateCriticalIssues(3);
       const score = calculateQualityScore(review, false);
       expect(score.score).toBe(10);
     });
 
-    test("4 criticals should score 0 (demonstrating diminishing returns)", () => {
+    test('4 criticals should score 0 (demonstrating diminishing returns)', () => {
       const review = generateCriticalIssues(4);
       const score = calculateQualityScore(review, false);
 
@@ -338,7 +303,7 @@ describe("review-analyzer", () => {
       expect(score.score).toBe(0);
     });
 
-    test("Score progression should show diminishing returns effect", () => {
+    test('Score progression should show diminishing returns effect', () => {
       // This is the key test: verify the PROGRESSION is correct
       // Current bug: score += Math.floor(count - 3) * 5 ADDS BACK points
       // This means score goes: 100, 70, 40, 10, -15+5=-10 (clamped 0)
@@ -347,7 +312,7 @@ describe("review-analyzer", () => {
 
       const scores = [];
       for (let i = 0; i <= 6; i++) {
-        const review = i === 0 ? "Looks good" : generateCriticalIssues(i);
+        const review = i === 0 ? 'Looks good' : generateCriticalIssues(i);
         const result = calculateQualityScore(review, false);
         scores.push(result.score);
       }
@@ -369,7 +334,7 @@ describe("review-analyzer", () => {
       }
     });
 
-    test("Diminishing returns calculation must happen BEFORE penalties are applied", () => {
+    test('Diminishing returns calculation must happen BEFORE penalties are applied', () => {
       // This is the core bug: current code does:
       // 1. score -= count * 30
       // 2. score += (count - 3) * 5
@@ -383,7 +348,7 @@ describe("review-analyzer", () => {
 
       const scores = [];
       for (let i = 0; i <= 10; i++) {
-        const review = i === 0 ? "Looks good" : generateCriticalIssues(i);
+        const review = i === 0 ? 'Looks good' : generateCriticalIssues(i);
         const result = calculateQualityScore(review, false);
         scores.push(result.score);
       }
@@ -394,7 +359,7 @@ describe("review-analyzer", () => {
       }
     });
 
-    test("Softening factor must be proportional to base weight (Issue #19)", () => {
+    test('Softening factor must be proportional to base weight (Issue #19)', () => {
       // Issue #19: The softening should be proportional to base weight
       // Softened weight = baseWeight * (1 - softenFactor)
       // With baseWeight=30, softenFactor=0.17: softened = 30 * 0.83 = 24.9 ≈ 25
@@ -426,9 +391,9 @@ describe("review-analyzer", () => {
       // not add-back after full penalty).
     });
 
-    test("Warning and suggestion scoring should remain unaffected", () => {
-      const reviewWarnings = "Warning: potential issue\nWarning: edge case";
-      const reviewSuggestions = "Consider improving\nSuggest refactoring";
+    test('Warning and suggestion scoring should remain unaffected', () => {
+      const reviewWarnings = 'Warning: potential issue\nWarning: edge case';
+      const reviewSuggestions = 'Consider improving\nSuggest refactoring';
 
       const scoreWarnings = calculateQualityScore(reviewWarnings, false);
       const scoreSuggestions = calculateQualityScore(reviewSuggestions, false);
@@ -441,98 +406,92 @@ describe("review-analyzer", () => {
     });
   });
 
-  describe("Issue #15: Input validation and ReDoS protection", () => {
-    describe("analyzeReviewSeverity input validation", () => {
-      test("should reject empty string", () => {
+  describe('Issue #15: Input validation and ReDoS protection', () => {
+    describe('analyzeReviewSeverity input validation', () => {
+      test('should reject empty string', () => {
         expect(() => {
-          analyzeReviewSeverity("");
-        }).toThrow("Invalid input: reviewComment cannot be empty");
+          analyzeReviewSeverity('');
+        }).toThrow('Invalid input: reviewComment cannot be empty');
       });
 
-      test("should reject null input", () => {
+      test('should reject null input', () => {
         expect(() => {
           analyzeReviewSeverity(null as any);
-        }).toThrow("Invalid input: reviewComment must be a string");
+        }).toThrow('Invalid input: reviewComment must be a string');
       });
 
-      test("should reject undefined input", () => {
+      test('should reject undefined input', () => {
         expect(() => {
           analyzeReviewSeverity(undefined as any);
-        }).toThrow("Invalid input: reviewComment must be a string");
+        }).toThrow('Invalid input: reviewComment must be a string');
       });
 
-      test("should reject non-string input", () => {
+      test('should reject non-string input', () => {
         expect(() => {
           analyzeReviewSeverity(123 as any);
-        }).toThrow("Invalid input: reviewComment must be a string");
+        }).toThrow('Invalid input: reviewComment must be a string');
       });
 
-      test("should reject excessively large input (>10000 chars)", () => {
+      test('should reject excessively large input (>10000 chars)', () => {
         // Create a string larger than 10000 characters
-        const largeInput = "a".repeat(10001);
+        const largeInput = 'a'.repeat(10001);
 
         expect(() => {
           analyzeReviewSeverity(largeInput);
-        }).toThrow(
-          "Invalid input: reviewComment exceeds maximum length of 10000 characters"
-        );
+        }).toThrow('Invalid input: reviewComment exceeds maximum length of 10000 characters');
       });
 
-      test("should accept input at exactly 10000 characters", () => {
+      test('should accept input at exactly 10000 characters', () => {
         // Create a string at exactly 10000 characters
-        const maxInput = "a".repeat(10000);
+        const maxInput = 'a'.repeat(10000);
 
         expect(() => {
           analyzeReviewSeverity(maxInput);
         }).not.toThrow();
       });
 
-      test("should reject input with excessive newlines (>1000 lines)", () => {
+      test('should reject input with excessive newlines (>1000 lines)', () => {
         // Create a string with more than 1000 lines
-        const manyLines = Array(1001).fill("test").join("\n");
+        const manyLines = Array(1001).fill('test').join('\n');
 
         expect(() => {
           analyzeReviewSeverity(manyLines);
-        }).toThrow(
-          "Invalid input: reviewComment exceeds maximum of 1000 lines"
-        );
+        }).toThrow('Invalid input: reviewComment exceeds maximum of 1000 lines');
       });
 
-      test("should accept input with exactly 1000 lines", () => {
+      test('should accept input with exactly 1000 lines', () => {
         // Create a string with exactly 1000 lines
-        const maxLines = Array(1000).fill("test").join("\n");
+        const maxLines = Array(1000).fill('test').join('\n');
 
         expect(() => {
           analyzeReviewSeverity(maxLines);
         }).not.toThrow();
       });
 
-      test("should accept input with exactly 1000 lines ending with newline", () => {
+      test('should accept input with exactly 1000 lines ending with newline', () => {
         // Create a string with exactly 1000 lines, ending with \n
         // This should count as 1000 lines, not 1001
-        const maxLines = Array(1000).fill("test").join("\n") + "\n";
+        const maxLines = Array(1000).fill('test').join('\n') + '\n';
 
         expect(() => {
           analyzeReviewSeverity(maxLines);
         }).not.toThrow();
       });
 
-      test("should reject input with 1001 lines", () => {
+      test('should reject input with 1001 lines', () => {
         // Create a string with 1001 lines
-        const tooManyLines = Array(1001).fill("test").join("\n");
+        const tooManyLines = Array(1001).fill('test').join('\n');
 
         expect(() => {
           analyzeReviewSeverity(tooManyLines);
-        }).toThrow(
-          "Invalid input: reviewComment exceeds maximum of 1000 lines"
-        );
+        }).toThrow('Invalid input: reviewComment exceeds maximum of 1000 lines');
       });
     });
 
-    describe("ReDoS protection", () => {
-      test("should handle input with complex nested patterns safely", () => {
+    describe('ReDoS protection', () => {
+      test('should handle input with complex nested patterns safely', () => {
         // Patterns that could cause catastrophic backtracking
-        const complexPattern = "security " + "a".repeat(100) + " vulnerability";
+        const complexPattern = 'security ' + 'a'.repeat(100) + ' vulnerability';
 
         const start = Date.now();
         const result = analyzeReviewSeverity(complexPattern);
@@ -543,11 +502,9 @@ describe("review-analyzer", () => {
         expect(result.critical).toHaveLength(1);
       });
 
-      test("should handle input with many repeated patterns safely", () => {
+      test('should handle input with many repeated patterns safely', () => {
         // Many repeated keywords
-        const repeatedPattern = Array(100)
-          .fill("warning: potential issue here")
-          .join("\n");
+        const repeatedPattern = Array(100).fill('warning: potential issue here').join('\n');
 
         const start = Date.now();
         const result = analyzeReviewSeverity(repeatedPattern);
@@ -558,9 +515,9 @@ describe("review-analyzer", () => {
         expect(result.warnings.length).toBeGreaterThan(0);
       });
 
-      test("should handle input with pathological whitespace patterns", () => {
+      test('should handle input with pathological whitespace patterns', () => {
         // Excessive whitespace could cause issues with some regex
-        const whitespacePattern = "security   \t\t\t   vulnerability\n\n\n\n";
+        const whitespacePattern = 'security   \t\t\t   vulnerability\n\n\n\n';
 
         const start = Date.now();
         const result = analyzeReviewSeverity(whitespacePattern);
@@ -572,10 +529,9 @@ describe("review-analyzer", () => {
       });
     });
 
-    describe("Valid inputs still work correctly", () => {
-      test("should correctly analyze normal security comment", () => {
-        const comment =
-          "This code has a security vulnerability that needs to be fixed.";
+    describe('Valid inputs still work correctly', () => {
+      test('should correctly analyze normal security comment', () => {
+        const comment = 'This code has a security vulnerability that needs to be fixed.';
         const result = analyzeReviewSeverity(comment);
 
         expect(result.critical).toHaveLength(1);
@@ -583,7 +539,7 @@ describe("review-analyzer", () => {
         expect(result.suggestions).toHaveLength(0);
       });
 
-      test("should correctly analyze mixed severity comment", () => {
+      test('should correctly analyze mixed severity comment', () => {
         const comment = `
           Critical: SQL injection vulnerability in line 42
           Warning: This might fail under heavy load
@@ -596,23 +552,23 @@ describe("review-analyzer", () => {
         expect(result.suggestions).toHaveLength(1);
       });
 
-      test("should handle reasonable size inputs efficiently", () => {
+      test('should handle reasonable size inputs efficiently', () => {
         // 5000 character comment (well within limits)
-        const comment = "This is a reasonable review comment. ".repeat(130);
+        const comment = 'This is a reasonable review comment. '.repeat(130);
 
         const start = Date.now();
         const result = analyzeReviewSeverity(comment);
         const duration = Date.now() - start;
 
         expect(duration).toBeLessThan(100);
-        expect(result).toHaveProperty("critical");
-        expect(result).toHaveProperty("warnings");
-        expect(result).toHaveProperty("suggestions");
+        expect(result).toHaveProperty('critical');
+        expect(result).toHaveProperty('warnings');
+        expect(result).toHaveProperty('suggestions');
       });
     });
   });
 
-  describe("Issue #21: Defensive defaults for undefined severity arrays", () => {
+  describe('Issue #21: Defensive defaults for undefined severity arrays', () => {
     // Note: We can't easily mock analyzeReviewSeverity since it's imported in the same module,
     // but we can test the actual behavior by directly injecting malformed data through
     // monkey-patching or by testing calculateQualityScore's defensive defaults.
@@ -621,8 +577,8 @@ describe("review-analyzer", () => {
     // if analyzeReviewSeverity returned undefined/null arrays by testing the
     // actual implementation's defensive defaults.
 
-    test("calculateQualityScore should handle normal review without crashing", () => {
-      const reviewComment = "This looks good but consider adding tests";
+    test('calculateQualityScore should handle normal review without crashing', () => {
+      const reviewComment = 'This looks good but consider adding tests';
 
       // This should not throw even though we're accessing .length on arrays
       expect(() => {
@@ -632,28 +588,28 @@ describe("review-analyzer", () => {
       }).not.toThrow();
     });
 
-    test("calculateQualityScore should reject empty review (Issue #15)", () => {
+    test('calculateQualityScore should reject empty review (Issue #15)', () => {
       // Issue #15: Input validation should reject empty/whitespace-only input
       expect(() => {
-        calculateQualityScore("", false);
-      }).toThrow("Invalid input: reviewComment cannot be empty");
+        calculateQualityScore('', false);
+      }).toThrow('Invalid input: reviewComment cannot be empty');
 
       // Also test whitespace-only
       expect(() => {
-        calculateQualityScore("   \n\t  ", false);
-      }).toThrow("Invalid input: reviewComment cannot be empty");
+        calculateQualityScore('   \n\t  ', false);
+      }).toThrow('Invalid input: reviewComment cannot be empty');
     });
 
-    test("calculateQualityScore should produce valid score with minimal review", () => {
+    test('calculateQualityScore should produce valid score with minimal review', () => {
       // Minimal non-empty review (Issue #15 requires non-empty input)
-      const reviewComment = "Looks good";
+      const reviewComment = 'Looks good';
 
       const result = calculateQualityScore(reviewComment, false);
       expect(result.score).toBe(100); // No issues = perfect score
-      expect(result.category).toBe("excellent");
+      expect(result.category).toBe('excellent');
     });
 
-    test("calculateQualityScore should handle review with all severity types", () => {
+    test('calculateQualityScore should handle review with all severity types', () => {
       const reviewComment = `
         Critical: SQL injection vulnerability detected
         Warning: This might fail under heavy load
@@ -665,11 +621,11 @@ describe("review-analyzer", () => {
       expect(result.score).toBeGreaterThanOrEqual(0);
     });
 
-    test("calculateQualityScore should reject non-boolean lgtm (string)", () => {
-      const reviewComment = "Looks good!";
+    test('calculateQualityScore should reject non-boolean lgtm (string)', () => {
+      const reviewComment = 'Looks good!';
       const validAuth = {
         isVerified: true,
-        login: "reviewer",
+        login: 'reviewer',
         hasWriteAccess: true,
         verifiedAt: new Date(),
       } as ReviewerAuth;
@@ -677,19 +633,17 @@ describe("review-analyzer", () => {
       // SECURITY: Don't accept non-boolean values for security-sensitive lgtm flag
       // Single invocation with combined assertion
       expect(() => {
-        calculateQualityScore(reviewComment, "true" as any, validAuth);
+        calculateQualityScore(reviewComment, 'true' as any, validAuth);
       }).toThrow(
-        new TypeError(
-          "Invalid input: lgtm parameter must be a boolean. Received string: true"
-        )
+        new TypeError('Invalid input: lgtm parameter must be a boolean. Received string: true')
       );
     });
 
-    test("calculateQualityScore should reject non-boolean lgtm (number)", () => {
-      const reviewComment = "Looks good!";
+    test('calculateQualityScore should reject non-boolean lgtm (number)', () => {
+      const reviewComment = 'Looks good!';
       const validAuth = {
         isVerified: true,
-        login: "reviewer",
+        login: 'reviewer',
         hasWriteAccess: true,
         verifiedAt: new Date(),
       } as ReviewerAuth;
@@ -699,42 +653,36 @@ describe("review-analyzer", () => {
       expect(() => {
         calculateQualityScore(reviewComment, 1 as any, validAuth);
       }).toThrow(
-        new TypeError(
-          "Invalid input: lgtm parameter must be a boolean. Received number: 1"
-        )
+        new TypeError('Invalid input: lgtm parameter must be a boolean. Received number: 1')
       );
     });
 
-    test("calculateQualityScore should reject non-boolean lgtm (number 0)", () => {
-      const reviewComment = "Needs work";
+    test('calculateQualityScore should reject non-boolean lgtm (number 0)', () => {
+      const reviewComment = 'Needs work';
 
       // SECURITY: Reject non-boolean even if falsy
       // Single invocation with combined assertion
       expect(() => {
         calculateQualityScore(reviewComment, 0 as any);
       }).toThrow(
-        new TypeError(
-          "Invalid input: lgtm parameter must be a boolean. Received number: 0"
-        )
+        new TypeError('Invalid input: lgtm parameter must be a boolean. Received number: 0')
       );
     });
 
-    test("calculateQualityScore should reject non-boolean lgtm (empty string)", () => {
-      const reviewComment = "Needs work";
+    test('calculateQualityScore should reject non-boolean lgtm (empty string)', () => {
+      const reviewComment = 'Needs work';
 
       // SECURITY: Reject non-boolean even if falsy
       // Single invocation with combined assertion
       expect(() => {
-        calculateQualityScore(reviewComment, "" as any);
+        calculateQualityScore(reviewComment, '' as any);
       }).toThrow(
-        new TypeError(
-          "Invalid input: lgtm parameter must be a boolean. Received string: "
-        )
+        new TypeError('Invalid input: lgtm parameter must be a boolean. Received string: ')
       );
     });
 
-    test("calculateQualityScore should reject non-boolean lgtm (undefined)", () => {
-      const reviewComment = "Needs work";
+    test('calculateQualityScore should reject non-boolean lgtm (undefined)', () => {
+      const reviewComment = 'Needs work';
 
       // SECURITY: Reject non-boolean even if falsy
       // Single invocation with combined assertion
@@ -742,13 +690,13 @@ describe("review-analyzer", () => {
         calculateQualityScore(reviewComment, undefined as any);
       }).toThrow(
         new TypeError(
-          "Invalid input: lgtm parameter must be a boolean. Received undefined: undefined"
+          'Invalid input: lgtm parameter must be a boolean. Received undefined: undefined'
         )
       );
     });
 
-    test("calculateQualityScore should reject non-boolean lgtm (BigInt) without serialization error", () => {
-      const reviewComment = "Needs work";
+    test('calculateQualityScore should reject non-boolean lgtm (BigInt) without serialization error', () => {
+      const reviewComment = 'Needs work';
 
       // SECURITY: Reject BigInt without JSON.stringify throwing TypeError
       // Uses String() for safe serialization
@@ -756,46 +704,42 @@ describe("review-analyzer", () => {
       expect(() => {
         calculateQualityScore(reviewComment, BigInt(1) as any);
       }).toThrow(
-        new TypeError(
-          "Invalid input: lgtm parameter must be a boolean. Received bigint: 1"
-        )
+        new TypeError('Invalid input: lgtm parameter must be a boolean. Received bigint: 1')
       );
     });
   });
 
-  describe("Issue #11: Breakdown score calculation", () => {
-    describe("Security breakdown", () => {
-      test("should start from 100 and deduct only security-related critical issues", () => {
+  describe('Issue #11: Breakdown score calculation', () => {
+    describe('Security breakdown', () => {
+      test('should start from 100 and deduct only security-related critical issues', () => {
         // Review with 1 security critical issue (should deduct 40 points)
-        const reviewComment =
-          "CRITICAL: Security vulnerability found in authentication logic.";
+        const reviewComment = 'CRITICAL: Security vulnerability found in authentication logic.';
         const result = calculateQualityScore(reviewComment, false);
 
         // Security breakdown should be: 100 - (1 * 40) = 60
         expect(result.breakdown.security).toBe(60);
       });
 
-      test("should return 100 when there are no security issues", () => {
+      test('should return 100 when there are no security issues', () => {
         // Review with non-security issues
         const reviewComment =
-          "Warning: Consider refactoring this function for better maintainability.";
+          'Warning: Consider refactoring this function for better maintainability.';
         const result = calculateQualityScore(reviewComment, false);
 
         // Security breakdown should remain 100 (no security issues)
         expect(result.breakdown.security).toBe(100);
       });
 
-      test("should not be affected by non-security critical issues", () => {
+      test('should not be affected by non-security critical issues', () => {
         // Review with non-security critical issue
-        const reviewComment =
-          "CRITICAL: Performance bottleneck detected in database queries.";
+        const reviewComment = 'CRITICAL: Performance bottleneck detected in database queries.';
         const result = calculateQualityScore(reviewComment, false);
 
         // Security breakdown should remain 100 (no security issues)
         expect(result.breakdown.security).toBe(100);
       });
 
-      test("should handle multiple security critical issues", () => {
+      test('should handle multiple security critical issues', () => {
         // Review with 2 security critical issues
         const reviewComment = `CRITICAL: Security flaw in authentication
 CRITICAL: Security issue with input validation`;
@@ -805,7 +749,7 @@ CRITICAL: Security issue with input validation`;
         expect(result.breakdown.security).toBe(20);
       });
 
-      test("should not go below zero", () => {
+      test('should not go below zero', () => {
         // Review with 3 security critical issues (would be -20 without Math.max)
         const reviewComment = `CRITICAL: Security flaw 1
 CRITICAL: Security flaw 2
@@ -817,8 +761,8 @@ CRITICAL: Security flaw 3`;
       });
     });
 
-    describe("Maintainability breakdown", () => {
-      test("should start from 100 and deduct only for warnings", () => {
+    describe('Maintainability breakdown', () => {
+      test('should start from 100 and deduct only for warnings', () => {
         // Review with 2 warnings (should deduct 10 points each)
         const reviewComment = `Warning: Code duplication detected
 Warning: Complex function should be refactored`;
@@ -828,16 +772,16 @@ Warning: Complex function should be refactored`;
         expect(result.breakdown.maintainability).toBe(80);
       });
 
-      test("should return 100 when there are no warnings", () => {
+      test('should return 100 when there are no warnings', () => {
         // Review with only suggestions
-        const reviewComment = "Suggestion: Consider adding documentation.";
+        const reviewComment = 'Suggestion: Consider adding documentation.';
         const result = calculateQualityScore(reviewComment, false);
 
         // Maintainability breakdown should remain 100 (no warnings)
         expect(result.breakdown.maintainability).toBe(100);
       });
 
-      test("should not be affected by overall score deductions", () => {
+      test('should not be affected by overall score deductions', () => {
         // Review with critical issues that lower overall score, but only 1 warning
         const reviewComment = `CRITICAL: Major bug
 CRITICAL: Another bug
@@ -849,7 +793,7 @@ Warning: Minor code smell`;
         expect(result.breakdown.maintainability).toBe(90);
       });
 
-      test("should count all warnings including performance and others", () => {
+      test('should count all warnings including performance and others', () => {
         // Review with multiple types of warnings
         const reviewComment = `Warning: Performance issue
 Warning: Code duplication
@@ -861,27 +805,26 @@ Warning: Lack of error handling`;
       });
     });
 
-    describe("Performance breakdown", () => {
-      test("should start from 100 and deduct only performance-related warnings", () => {
+    describe('Performance breakdown', () => {
+      test('should start from 100 and deduct only performance-related warnings', () => {
         // Review with 1 performance warning (should deduct 20 points)
-        const reviewComment =
-          "Warning: Performance bottleneck in loop. Consider optimization.";
+        const reviewComment = 'Warning: Performance bottleneck in loop. Consider optimization.';
         const result = calculateQualityScore(reviewComment, false);
 
         // Performance breakdown should be: 100 - (1 * 20) = 80
         expect(result.breakdown.performance).toBe(80);
       });
 
-      test("should return 100 when there are no performance warnings", () => {
+      test('should return 100 when there are no performance warnings', () => {
         // Review with non-performance warnings
-        const reviewComment = "Warning: Code duplication detected.";
+        const reviewComment = 'Warning: Code duplication detected.';
         const result = calculateQualityScore(reviewComment, false);
 
         // Performance breakdown should remain 100 (no performance warnings)
         expect(result.breakdown.performance).toBe(100);
       });
 
-      test("should handle multiple performance warnings", () => {
+      test('should handle multiple performance warnings', () => {
         // Review with 2 performance warnings
         const reviewComment = `Warning: Performance issue in database query
 Warning: Performance degradation in loop`;
@@ -891,7 +834,7 @@ Warning: Performance degradation in loop`;
         expect(result.breakdown.performance).toBe(60);
       });
 
-      test("should not be affected by non-performance issues", () => {
+      test('should not be affected by non-performance issues', () => {
         // Review with multiple non-performance issues
         const reviewComment = `CRITICAL: Security flaw
 Warning: Code duplication
@@ -903,8 +846,8 @@ Warning: Lack of tests`;
       });
     });
 
-    describe("Testability breakdown", () => {
-      test("should start from 100 and deduct only test-related suggestions", () => {
+    describe('Testability breakdown', () => {
+      test('should start from 100 and deduct only test-related suggestions', () => {
         // Review with 2 test suggestions (should deduct 10 points each)
         // Note: avoid "edge case" as it triggers warning category
         const reviewComment = `Suggestion: Add unit tests for this function
@@ -915,7 +858,7 @@ Suggestion: Test error handling paths`;
         expect(result.breakdown.testability).toBe(80);
       });
 
-      test("should return 100 when there are no test-related suggestions", () => {
+      test('should return 100 when there are no test-related suggestions', () => {
         // Review with non-test suggestions
         const reviewComment = `Suggestion: Add documentation
 Suggestion: Consider using a more descriptive variable name`;
@@ -925,7 +868,7 @@ Suggestion: Consider using a more descriptive variable name`;
         expect(result.breakdown.testability).toBe(100);
       });
 
-      test("should handle multiple test-related suggestions", () => {
+      test('should handle multiple test-related suggestions', () => {
         // Review with 3 test suggestions
         // Note: avoid "edge case" as it triggers warning category
         const reviewComment = `Suggestion: Add tests
@@ -937,10 +880,10 @@ Suggestion: Test boundary conditions`;
         expect(result.breakdown.testability).toBe(70);
       });
 
-      test("should not be affected by other issues", () => {
+      test('should not be affected by other issues', () => {
         // Review with various issues but no test suggestions
         const reviewComment =
-          "CRITICAL: Security issue. Warning: Performance problem. Suggestion: Add documentation.";
+          'CRITICAL: Security issue. Warning: Performance problem. Suggestion: Add documentation.';
         const result = calculateQualityScore(reviewComment, false);
 
         // Testability breakdown should remain 100 (no test suggestions)
@@ -948,8 +891,8 @@ Suggestion: Test boundary conditions`;
       });
     });
 
-    describe("Breakdown independence", () => {
-      test("breakdown scores should be independent of overall score", () => {
+    describe('Breakdown independence', () => {
+      test('breakdown scores should be independent of overall score', () => {
         // Review with heavy maintainability penalties (many warnings)
         // but no security issues
         const reviewComment = `Warning: Issue 1
@@ -972,7 +915,7 @@ Warning: Issue 5`;
         expect(result.breakdown.maintainability).toBe(50);
       });
 
-      test("each dimension should reflect only its relevant issues", () => {
+      test('each dimension should reflect only its relevant issues', () => {
         // Complex review with issues in all dimensions
         // Note: each issue must be on its own line for proper categorization
         const reviewComment = `CRITICAL: Security vulnerability found
@@ -994,7 +937,7 @@ Suggestion: Add test coverage`;
         expect(result.breakdown.testability).toBe(90);
       });
 
-      test("breakdown should not inherit penalties from other dimensions", () => {
+      test('breakdown should not inherit penalties from other dimensions', () => {
         // Review with only security issues
         const reviewComment = `CRITICAL: Security flaw
 CRITICAL: Another security issue`;
@@ -1014,65 +957,55 @@ CRITICAL: Another security issue`;
     });
   });
 
-  describe("Issue #9: Input validation for aggregateReviewMetrics", () => {
-    test("should reject non-array input", () => {
+  describe('Issue #9: Input validation for aggregateReviewMetrics', () => {
+    test('should reject non-array input', () => {
       expect(() => {
-        aggregateReviewMetrics("not an array" as any);
-      }).toThrow(new TypeError("Invalid input: reviews must be an array"));
+        aggregateReviewMetrics('not an array' as any);
+      }).toThrow(new TypeError('Invalid input: reviews must be an array'));
     });
 
-    test("should reject null input", () => {
+    test('should reject null input', () => {
       expect(() => {
         aggregateReviewMetrics(null as any);
-      }).toThrow(new TypeError("Invalid input: reviews must be an array"));
+      }).toThrow(new TypeError('Invalid input: reviews must be an array'));
     });
 
-    test("should reject review with non-finite reviewTime (NaN)", () => {
-      const reviews = [
-        { lgtm: false, reviewComment: "Looks good", reviewTime: NaN },
-      ];
+    test('should reject review with non-finite reviewTime (NaN)', () => {
+      const reviews = [{ lgtm: false, reviewComment: 'Looks good', reviewTime: NaN }];
+
+      expect(() => {
+        aggregateReviewMetrics(reviews);
+      }).toThrow(
+        new TypeError('Invalid input: reviewTime must be a finite number. Received number: NaN')
+      );
+    });
+
+    test('should reject review with non-finite reviewTime (Infinity)', () => {
+      const reviews = [{ lgtm: false, reviewComment: 'Looks good', reviewTime: Infinity }];
 
       expect(() => {
         aggregateReviewMetrics(reviews);
       }).toThrow(
         new TypeError(
-          "Invalid input: reviewTime must be a finite number. Received number: NaN"
+          'Invalid input: reviewTime must be a finite number. Received number: Infinity'
         )
       );
     });
 
-    test("should reject review with non-finite reviewTime (Infinity)", () => {
-      const reviews = [
-        { lgtm: false, reviewComment: "Looks good", reviewTime: Infinity },
-      ];
+    test('should reject review with non-numeric reviewTime', () => {
+      const reviews = [{ lgtm: false, reviewComment: 'Looks good', reviewTime: '123' as any }];
 
       expect(() => {
         aggregateReviewMetrics(reviews);
       }).toThrow(
-        new TypeError(
-          "Invalid input: reviewTime must be a finite number. Received number: Infinity"
-        )
+        new TypeError('Invalid input: reviewTime must be a finite number. Received string: 123')
       );
     });
 
-    test("should reject review with non-numeric reviewTime", () => {
+    test('should accept valid reviews array', () => {
       const reviews = [
-        { lgtm: false, reviewComment: "Looks good", reviewTime: "123" as any },
-      ];
-
-      expect(() => {
-        aggregateReviewMetrics(reviews);
-      }).toThrow(
-        new TypeError(
-          "Invalid input: reviewTime must be a finite number. Received string: 123"
-        )
-      );
-    });
-
-    test("should accept valid reviews array", () => {
-      const reviews = [
-        { lgtm: true, reviewComment: "Looks good", reviewTime: 5 },
-        { lgtm: false, reviewComment: "Critical bug found", reviewTime: 10 },
+        { lgtm: true, reviewComment: 'Looks good', reviewTime: 5 },
+        { lgtm: false, reviewComment: 'Critical bug found', reviewTime: 10 },
       ];
 
       const result = aggregateReviewMetrics(reviews);
@@ -1082,7 +1015,7 @@ CRITICAL: Another security issue`;
       expect(result.averageReviewTime).toBe(7.5);
     });
 
-    test("should handle empty array gracefully", () => {
+    test('should handle empty array gracefully', () => {
       const result = aggregateReviewMetrics([]);
 
       expect(result.totalReviews).toBe(0);
@@ -1090,37 +1023,25 @@ CRITICAL: Another security issue`;
       expect(result.averageReviewTime).toBe(0);
     });
 
-    test("should reject review with non-boolean lgtm (string)", () => {
-      const reviews = [
-        { lgtm: "true" as any, reviewComment: "Looks good", reviewTime: 5 },
-      ];
+    test('should reject review with non-boolean lgtm (string)', () => {
+      const reviews = [{ lgtm: 'true' as any, reviewComment: 'Looks good', reviewTime: 5 }];
 
       expect(() => {
         aggregateReviewMetrics(reviews);
-      }).toThrow(
-        new TypeError(
-          "Invalid input: lgtm must be a boolean. Received string: true"
-        )
-      );
+      }).toThrow(new TypeError('Invalid input: lgtm must be a boolean. Received string: true'));
     });
 
-    test("should reject review with non-boolean lgtm (number)", () => {
-      const reviews = [
-        { lgtm: 1 as any, reviewComment: "Looks good", reviewTime: 5 },
-      ];
+    test('should reject review with non-boolean lgtm (number)', () => {
+      const reviews = [{ lgtm: 1 as any, reviewComment: 'Looks good', reviewTime: 5 }];
 
       expect(() => {
         aggregateReviewMetrics(reviews);
-      }).toThrow(
-        new TypeError(
-          "Invalid input: lgtm must be a boolean. Received number: 1"
-        )
-      );
+      }).toThrow(new TypeError('Invalid input: lgtm must be a boolean. Received number: 1'));
     });
   });
 
-  describe("Issue #17: SECURITY - Prevent score gaming via issue fragmentation", () => {
-    test("should deduplicate exact duplicate critical issues", () => {
+  describe('Issue #17: SECURITY - Prevent score gaming via issue fragmentation', () => {
+    test('should deduplicate exact duplicate critical issues', () => {
       const reviewComment = `
         Security vulnerability in authentication
         Security vulnerability in authentication
@@ -1133,7 +1054,7 @@ CRITICAL: Another security issue`;
       expect(result.critical.length).toBe(1);
     });
 
-    test("should deduplicate exact duplicate warnings", () => {
+    test('should deduplicate exact duplicate warnings', () => {
       const reviewComment = `
         Warning: potential issue with null handling
         Warning: potential issue with null handling
@@ -1144,7 +1065,7 @@ CRITICAL: Another security issue`;
       expect(result.warnings.length).toBe(1);
     });
 
-    test("should deduplicate exact duplicate suggestions", () => {
+    test('should deduplicate exact duplicate suggestions', () => {
       const reviewComment = `
         Consider using async/await
         Consider using async/await
@@ -1156,7 +1077,7 @@ CRITICAL: Another security issue`;
       expect(result.suggestions.length).toBe(1);
     });
 
-    test("should keep genuinely different issues", () => {
+    test('should keep genuinely different issues', () => {
       const reviewComment = `
         Security vulnerability in authentication
         Security issue in API endpoint
@@ -1169,7 +1090,7 @@ CRITICAL: Another security issue`;
       expect(result.critical.length).toBe(3);
     });
 
-    test("should handle mixed duplicates and unique issues", () => {
+    test('should handle mixed duplicates and unique issues', () => {
       const reviewComment = `
         Security vulnerability found
         Security vulnerability found
@@ -1184,7 +1105,7 @@ CRITICAL: Another security issue`;
       expect(result.critical.length).toBe(3);
     });
 
-    test("should deduplicate case-insensitively", () => {
+    test('should deduplicate case-insensitively', () => {
       const reviewComment = `
         Security Vulnerability Found
         security vulnerability found
@@ -1196,7 +1117,7 @@ CRITICAL: Another security issue`;
       expect(result.critical.length).toBe(1);
     });
 
-    test("should trim whitespace before deduplication", () => {
+    test('should trim whitespace before deduplication', () => {
       const reviewComment = `
         Security vulnerability
           Security vulnerability
@@ -1208,92 +1129,77 @@ CRITICAL: Another security issue`;
       expect(result.critical.length).toBe(1);
     });
   });
-  describe("Issue #29: Rate limiting and memoization", () => {
-    test("should cache authorization results for repeated calls", async () => {
+  describe('Issue #29: Rate limiting and memoization', () => {
+    test('should cache authorization results for repeated calls', async () => {
       mockFetch.mockResolvedValue({
         ok: true,
         status: 200,
         json: async () => ({
-          permission: "write",
-          user: { login: "test-user" },
+          permission: 'write',
+          user: { login: 'test-user' },
         }),
       } as any);
 
       // First call
-      const auth1 = await verifyReviewerAuthorization(
-        "test-user",
-        "owner",
-        "repo",
-        "token"
-      );
+      const auth1 = await verifyReviewerAuthorization('test-user', 'owner', 'repo', 'token');
       expect(auth1.isVerified).toBe(true);
 
       // Second call should use cache (no additional fetch)
       mockFetch.mockClear();
-      const auth2 = await verifyReviewerAuthorization(
-        "test-user",
-        "owner",
-        "repo",
-        "token"
-      );
+      const auth2 = await verifyReviewerAuthorization('test-user', 'owner', 'repo', 'token');
       expect(auth2.isVerified).toBe(true);
       expect(mockFetch).not.toHaveBeenCalled();
     });
 
-    test("should not leak token in any logs", async () => {
-      const consoleLog = jest.spyOn(console, "log");
-      const consoleError = jest.spyOn(console, "error");
+    test('should not leak token in any logs', async () => {
+      const consoleLog = jest.spyOn(console, 'log');
+      const consoleError = jest.spyOn(console, 'error');
 
-      mockFetch.mockRejectedValue(new Error("Network error"));
+      mockFetch.mockRejectedValue(new Error('Network error'));
 
-      await verifyReviewerAuthorization(
-        "test",
-        "owner",
-        "repo",
-        "secret-token-123"
-      );
+      await verifyReviewerAuthorization('test', 'owner', 'repo', 'secret-token-123');
 
       // Check console output doesn't contain token
       const allLogs = [
         ...consoleLog.mock.calls.map((c) => JSON.stringify(c)),
         ...consoleError.mock.calls.map((c) => JSON.stringify(c)),
-      ].join(" ");
+      ].join(' ');
 
-      expect(allLogs).not.toContain("secret-token-123");
+      expect(allLogs).not.toContain('secret-token-123');
 
       consoleLog.mockRestore();
       consoleError.mockRestore();
     });
 
-    test("cache should expire after TTL", async () => {
+    test('cache should expire after TTL', async () => {
       jest.useFakeTimers();
 
       mockFetch.mockResolvedValue({
         ok: true,
         status: 200,
         json: async () => ({
-          permission: "write",
-          user: { login: "test-user" },
+          permission: 'write',
+          user: { login: 'test-user' },
         }),
       } as any);
 
       // First call
-      await verifyReviewerAuthorization("test-user", "owner", "repo", "token");
+      await verifyReviewerAuthorization('test-user', 'owner', 'repo', 'token');
       expect(mockFetch).toHaveBeenCalledTimes(1);
 
       // Advance time past TTL (5 minutes)
       jest.advanceTimersByTime(6 * 60 * 1000);
 
       // Should make new API call after TTL
-      await verifyReviewerAuthorization("test-user", "owner", "repo", "token");
+      await verifyReviewerAuthorization('test-user', 'owner', 'repo', 'token');
       expect(mockFetch).toHaveBeenCalledTimes(2);
 
       jest.useRealTimers();
     });
   });
 
-  describe("Issue #19: Softening factor must be tied to base weights", () => {
-    test("softening should be proportional to base weight", () => {
+  describe('Issue #19: Softening factor must be tied to base weights', () => {
+    test('softening should be proportional to base weight', () => {
       // Verify the softening factor is a ratio, not a fixed value
       const CRITICAL_BASE_WEIGHT = 30;
       const SOFTEN_FACTOR = 5 / 30; // Ratio: 0.1667 (16.67%)
@@ -1307,27 +1213,27 @@ CRITICAL: Another security issue`;
       expect(newSoftened).toBeCloseTo(33.33, 1); // 40 * (1 - 0.1667) ≈ 33.33
     });
 
-    test("softening prevents perverse incentives", () => {
+    test('softening prevents perverse incentives', () => {
       // Issue: if softening was fixed at +5, and base weight = 4,
       // then softened penalty would be -1 (increasing score with more issues)
       // With proportional softening, this cannot happen
       const review = Array(6)
         .fill(0)
         .map((_, i) => `Critical bug ${i}`)
-        .join("\n");
+        .join('\n');
       const result = calculateQualityScore(review, false);
 
       // Score should decrease monotonically (more issues = lower score)
       const review5 = Array(5)
         .fill(0)
         .map((_, i) => `Critical bug ${i}`)
-        .join("\n");
+        .join('\n');
       const result5 = calculateQualityScore(review5, false);
 
       expect(result.score).toBeLessThanOrEqual(result5.score);
     });
 
-    test("softened weight is always less than base weight", () => {
+    test('softened weight is always less than base weight', () => {
       // This ensures additional issues still penalize, never reward
       const CRITICAL_BASE_WEIGHT = 30;
       const SOFTEN_FACTOR = 5 / 30;
@@ -1336,160 +1242,130 @@ CRITICAL: Another security issue`;
       expect(softenedWeight).toBeLessThan(CRITICAL_BASE_WEIGHT);
       expect(softenedWeight).toBeGreaterThan(0);
     });
-    describe("Issue #28: Improve error handling and diagnostics", () => {
-      test("should handle malformed API response (missing user field)", async () => {
+    describe('Issue #28: Improve error handling and diagnostics', () => {
+      test('should handle malformed API response (missing user field)', async () => {
         mockFetch.mockResolvedValue({
           ok: true,
           status: 200,
           json: async () => ({
-            permission: "write",
+            permission: 'write',
             // Missing 'user' field
           }),
         } as any);
 
-        const auth = await verifyReviewerAuthorization(
-          "test",
-          "owner",
-          "repo",
-          "token"
-        );
+        const auth = await verifyReviewerAuthorization('test', 'owner', 'repo', 'token');
 
         // Should fail secure when response is malformed
         expect(auth.isVerified).toBe(false);
       });
 
-      test("should handle null user object", async () => {
+      test('should handle null user object', async () => {
         mockFetch.mockResolvedValue({
           ok: true,
           status: 200,
           json: async () => ({
-            permission: "write",
+            permission: 'write',
             user: null,
           }),
         } as any);
 
-        const auth = await verifyReviewerAuthorization(
-          "test",
-          "owner",
-          "repo",
-          "token"
-        );
+        const auth = await verifyReviewerAuthorization('test', 'owner', 'repo', 'token');
         expect(auth.isVerified).toBe(false);
       });
 
-      test("should handle missing permission field", async () => {
+      test('should handle missing permission field', async () => {
         mockFetch.mockResolvedValue({
           ok: true,
           status: 200,
           json: async () => ({
-            user: { login: "test" },
+            user: { login: 'test' },
             // Missing 'permission' field
           }),
         } as any);
 
-        const auth = await verifyReviewerAuthorization(
-          "test",
-          "owner",
-          "repo",
-          "token"
-        );
+        const auth = await verifyReviewerAuthorization('test', 'owner', 'repo', 'token');
         expect(auth.isVerified).toBe(false);
       });
 
-      test("should handle invalid JSON response", async () => {
+      test('should handle invalid JSON response', async () => {
         mockFetch.mockResolvedValue({
           ok: true,
           status: 200,
           json: async () => {
-            throw new Error("Invalid JSON");
+            throw new Error('Invalid JSON');
           },
         } as any);
 
-        const auth = await verifyReviewerAuthorization(
-          "test",
-          "owner",
-          "repo",
-          "token"
-        );
+        const auth = await verifyReviewerAuthorization('test', 'owner', 'repo', 'token');
         expect(auth.isVerified).toBe(false);
       });
 
-      test("should handle network errors gracefully", async () => {
-        mockFetch.mockRejectedValue(new Error("Network error"));
+      test('should handle network errors gracefully', async () => {
+        mockFetch.mockRejectedValue(new Error('Network error'));
 
-        const auth = await verifyReviewerAuthorization(
-          "test",
-          "owner",
-          "repo",
-          "token"
-        );
+        const auth = await verifyReviewerAuthorization('test', 'owner', 'repo', 'token');
         expect(auth.isVerified).toBe(false);
       });
 
-      test("should handle unexpected permission values", async () => {
+      test('should handle unexpected permission values', async () => {
         mockFetch.mockResolvedValue({
           ok: true,
           status: 200,
           json: async () => ({
-            permission: "unknown-permission",
-            user: { login: "test" },
+            permission: 'unknown-permission',
+            user: { login: 'test' },
           }),
         } as any);
 
-        const auth = await verifyReviewerAuthorization(
-          "test",
-          "owner",
-          "repo",
-          "token"
-        );
+        const auth = await verifyReviewerAuthorization('test', 'owner', 'repo', 'token');
         // Should mark as verified but no write access
         expect(auth.hasWriteAccess).toBe(false);
       });
     });
   });
-  describe("Issue #18: Centralize magic numbers into configuration", () => {
-    test("should use centralized category thresholds", () => {
+  describe('Issue #18: Centralize magic numbers into configuration', () => {
+    test('should use centralized category thresholds', () => {
       // Test boundary values for each category
-      const excellent = calculateQualityScore("Looks perfect", false);
+      const excellent = calculateQualityScore('Looks perfect', false);
       expect(excellent.score).toBeGreaterThanOrEqual(90);
-      expect(excellent.category).toBe("excellent");
+      expect(excellent.category).toBe('excellent');
 
-      const good = "Warning: potential issue here\nWarning: another issue";
+      const good = 'Warning: potential issue here\nWarning: another issue';
       const goodResult = calculateQualityScore(good, false);
       expect(goodResult.score).toBeGreaterThanOrEqual(70);
       expect(goodResult.score).toBeLessThan(90);
-      expect(goodResult.category).toBe("good");
+      expect(goodResult.category).toBe('good');
     });
 
-    test("should use centralized breakdown penalties", () => {
+    test('should use centralized breakdown penalties', () => {
       // Verify breakdown calculations use config values
-      const review = "Security vulnerability found";
+      const review = 'Security vulnerability found';
       const result = calculateQualityScore(review, false);
 
       // Security breakdown should use configured penalty
       expect(result.breakdown.security).toBeLessThan(100);
     });
 
-    test("should respect score bounds (0-100)", () => {
+    test('should respect score bounds (0-100)', () => {
       // Test minimum bound
       const manyIssues = Array(10)
         .fill(0)
         .map((_, i) => `Critical bug ${i}`)
-        .join("\n");
+        .join('\n');
       const minResult = calculateQualityScore(manyIssues, false);
       expect(minResult.score).toBeGreaterThanOrEqual(0);
       expect(minResult.score).toBeLessThanOrEqual(100);
 
       // Test maximum bound
-      const perfect = "Everything looks great!";
+      const perfect = 'Everything looks great!';
       const maxResult = calculateQualityScore(perfect, false);
       expect(maxResult.score).toBeGreaterThanOrEqual(0);
       expect(maxResult.score).toBeLessThanOrEqual(100);
     });
   });
 
-  describe("Issue #24: Remove redundant Math operations on integers", () => {
-    test("softened weight calculation should produce integer result", () => {
+  describe('Issue #24: Remove redundant Math operations on integers', () => {
+    test('softened weight calculation should produce integer result', () => {
       // Verify that 30 * (1 - 5/30) = 25 exactly (no rounding needed)
       const CRITICAL_BASE_WEIGHT = 30;
       const SOFTEN_FACTOR = 5 / 30;
@@ -1498,20 +1374,20 @@ CRITICAL: Another security issue`;
       expect(Number.isInteger(result)).toBe(true);
     });
 
-    test("penalty calculations work correctly without redundant operations", () => {
+    test('penalty calculations work correctly without redundant operations', () => {
       // 4 critical issues: 3 at base weight (30), 1 at softened weight (25)
       const review = Array(4)
         .fill(0)
         .map((_, i) => `Critical bug ${i}`)
-        .join("\n");
+        .join('\n');
       const result = calculateQualityScore(review, false);
 
       // Score = 100 - (3 * 30 + 1 * 25) = 100 - 115 = 0 (clamped)
       expect(result.score).toBe(0);
     });
 
-    describe("Issue #13: Make severity weighting configurable and match documentation", () => {
-      test("should use configurable severity weights for critical issues", () => {
+    describe('Issue #13: Make severity weighting configurable and match documentation', () => {
+      test('should use configurable severity weights for critical issues', () => {
         // 3 critical issues - all should use base weight
         const reviewComment = `
         This has a security vulnerability in the authentication
@@ -1525,7 +1401,7 @@ CRITICAL: Another security issue`;
         expect(result.score).toBe(10);
       });
 
-      test("should apply softened weight to critical issues beyond threshold", () => {
+      test('should apply softened weight to critical issues beyond threshold', () => {
         // 5 critical issues - first 3 at base weight (30), next 2 at softened weight (25)
         const reviewComment = `
         Security vulnerability in authentication
@@ -1541,7 +1417,7 @@ CRITICAL: Another security issue`;
         expect(result.score).toBe(0);
       });
 
-      test("should maintain consistent behavior with softened weight calculation", () => {
+      test('should maintain consistent behavior with softened weight calculation', () => {
         // 4 critical issues
         const reviewComment = `
         Security vulnerability detected
@@ -1557,7 +1433,7 @@ CRITICAL: Another security issue`;
         expect(result.score).toBe(0);
       });
 
-      test("should use configurable weights for warnings", () => {
+      test('should use configurable weights for warnings', () => {
         // 3 warnings
         const reviewComment = `
         Warning: potential issue with null handling
@@ -1571,7 +1447,7 @@ CRITICAL: Another security issue`;
         expect(result.score).toBe(55);
       });
 
-      test("should use configurable weights for suggestions", () => {
+      test('should use configurable weights for suggestions', () => {
         // 4 suggestions
         const reviewComment = `
         Consider using async/await here
@@ -1586,7 +1462,7 @@ CRITICAL: Another security issue`;
         expect(result.score).toBe(80);
       });
 
-      test("should handle mix of severity levels with configurable weights", () => {
+      test('should handle mix of severity levels with configurable weights', () => {
         // 2 critical, 2 warnings, 2 suggestions
         const reviewComment = `
         Security vulnerability in login
@@ -1603,7 +1479,7 @@ CRITICAL: Another security issue`;
         expect(result.score).toBe(0);
       });
 
-      test("should verify softened weight formula uses base weight", () => {
+      test('should verify softened weight formula uses base weight', () => {
         // Test that softened weight is derived from base weight, not hardcoded
         // 6 critical issues: 3 at base (30), 3 at softened (25)
         const reviewComment = `
@@ -1621,7 +1497,7 @@ CRITICAL: Another security issue`;
         expect(result.score).toBe(0);
       });
 
-      test("should allow easy tuning of severity thresholds", () => {
+      test('should allow easy tuning of severity thresholds', () => {
         // Verify behavior at softening threshold boundary (exactly 3 critical)
         const exactly3 = `
         Security vulnerability
@@ -1671,8 +1547,10 @@ CRITICAL: Another security issue`;
 
     test('should respect score bounds (0-100)', () => {
       // Test minimum bound
-      const manyIssues = Array(10).fill(0).map((_, i) =>
-        `Critical bug ${i}`).join('\n');
+      const manyIssues = Array(10)
+        .fill(0)
+        .map((_, i) => `Critical bug ${i}`)
+        .join('\n');
       const minResult = calculateQualityScore(manyIssues, false);
       expect(minResult.score).toBeGreaterThanOrEqual(0);
       expect(minResult.score).toBeLessThanOrEqual(100);
@@ -1685,13 +1563,13 @@ CRITICAL: Another security issue`;
     });
   });
 
-  describe("Issue #20: Single-responsibility helper functions", () => {
-    test("refactoring should maintain exact scoring behavior", () => {
+  describe('Issue #20: Single-responsibility helper functions', () => {
+    test('refactoring should maintain exact scoring behavior', () => {
       const testCases = [
-        "Critical bug found",
-        "Warning: potential issue",
-        "Consider refactoring this\nSuggest adding tests",
-        "Critical bug 1\nCritical bug 2\nCritical bug 3\nCritical bug 4",
+        'Critical bug found',
+        'Warning: potential issue',
+        'Consider refactoring this\nSuggest adding tests',
+        'Critical bug 1\nCritical bug 2\nCritical bug 3\nCritical bug 4',
       ];
 
       testCases.forEach((review) => {
@@ -1701,14 +1579,14 @@ CRITICAL: Another security issue`;
       });
     });
 
-    test("refactored code should produce same results as before", () => {
+    test('refactored code should produce same results as before', () => {
       // Regression test - verify refactoring doesn't change behavior
-      const review = "Security vulnerability\nWarning: issue\nConsider this";
+      const review = 'Security vulnerability\nWarning: issue\nConsider this';
       const result = calculateQualityScore(review, false);
 
       // 1 critical (30) + 1 warning (15) + 1 suggestion (5) = 50 penalty
       expect(result.score).toBe(50);
-      expect(result.category).toBe("needs-improvement");
+      expect(result.category).toBe('needs-improvement');
     });
   });
 });

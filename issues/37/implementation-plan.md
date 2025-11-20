@@ -13,6 +13,7 @@
 ## Task 1: Create Review Formatter Module
 
 **Files:**
+
 - Create: `/home/m/workspace/worktrees/ChatGPT-CodeReview-worktree-2/src/review-formatter.ts`
 - Test: `/home/m/workspace/worktrees/ChatGPT-CodeReview-worktree-2/test/review-formatter.test.ts`
 
@@ -152,6 +153,7 @@ git commit -m "feat: add review formatter with issue summaries and collapsible d
 ## Task 2: Update Chat API Response Schema
 
 **Files:**
+
 - Modify: `/home/m/workspace/worktrees/ChatGPT-CodeReview-worktree-2/src/chat.ts:156-204`
 - Test: `/home/m/workspace/worktrees/ChatGPT-CodeReview-worktree-2/test/chat-structured-output.test.ts`
 
@@ -312,6 +314,7 @@ git commit -m "feat: update Chat API to return structured issues and details"
 ## Task 3: Update Responses API Schema
 
 **Files:**
+
 - Modify: `/home/m/workspace/worktrees/ChatGPT-CodeReview-worktree-2/src/chat.ts:57-153`
 
 **Step 1: Write test for Responses API structured output**
@@ -537,6 +540,7 @@ git commit -m "feat: update Responses API to return structured issues and detail
 ## Task 4: Integrate Formatter in Bot
 
 **Files:**
+
 - Modify: `/home/m/workspace/worktrees/ChatGPT-CodeReview-worktree-2/src/bot.ts:163-186`
 
 **Step 1: Write test for bot using formatter**
@@ -555,9 +559,7 @@ describe('Bot formatter integration', () => {
     const reviewData = {
       lgtm: false,
       review_comment: 'Legacy comment',
-      issues: [
-        { severity: 'critical', message: 'Security issue' },
-      ],
+      issues: [{ severity: 'critical', message: 'Security issue' }],
       details: 'Detailed explanation here.',
     };
 
@@ -622,9 +624,7 @@ for (let i = 0; i < changedFiles.length; i++) {
   }
 
   if (!patch || patch.length > MAX_PATCH_COUNT) {
-    log.info(
-      `${file.filename} skipped caused by its diff is too large`
-    );
+    log.info(`${file.filename} skipped caused by its diff is too large`);
     continue;
   }
   try {
@@ -657,7 +657,7 @@ for (let i = 0; i < changedFiles.length; i++) {
         path: file.filename,
         body: commentBody,
         position: position,
-      })
+      });
     }
   } catch (e) {
     log.info(`review ${file.filename} failed`, e);
@@ -688,6 +688,7 @@ git commit -m "feat: integrate review formatter in bot for structured comments"
 ## Task 5: Add Environment Variable for Toggle
 
 **Files:**
+
 - Modify: `/home/m/workspace/worktrees/ChatGPT-CodeReview-worktree-2/src/bot.ts:163-186`
 - Modify: `/home/m/workspace/worktrees/ChatGPT-CodeReview-worktree-2/.env.example`
 
@@ -782,6 +783,7 @@ git commit -m "feat: add COMMENT_FORMAT env var to toggle between formats"
 ## Task 6: Update Documentation
 
 **Files:**
+
 - Modify: `/home/m/workspace/worktrees/ChatGPT-CodeReview-worktree-2/README.md`
 - Modify: `/home/m/workspace/worktrees/ChatGPT-CodeReview-worktree-2/CLAUDE.md`
 
@@ -801,6 +803,7 @@ Add section about structured comment format in the configuration/environment var
   - `legacy`: Uses plain markdown format (backward compatible)
 
 The structured format includes:
+
 - Concise issue list at the top organized by severity (Critical, Warning, Style, Suggestion)
 - Detailed explanations collapsed by default for easier PR scanning
 - Improved readability for reviews with multiple issues
@@ -828,6 +831,7 @@ Update the "Code Review Flow" section in CLAUDE.md:
 ## Review Comment Format
 
 By default (COMMENT_FORMAT=structured), comments include:
+
 - **Issue Summary**: Concise list of all issues by severity
 - **Detailed Analysis**: Full explanations in collapsible `<details>` section
 
@@ -846,6 +850,7 @@ git commit -m "docs: document structured comment format feature"
 ## Task 7: Run Full Test Suite and Build
 
 **Files:**
+
 - All project files
 
 **Step 1: Run all tests**
@@ -871,6 +876,7 @@ Expected: Working directory clean except for build artifacts
 **Step 5: Final verification commit**
 
 If any fixes were needed:
+
 ```bash
 git add .
 git commit -m "fix: address any type errors or test failures"
@@ -881,11 +887,13 @@ git commit -m "fix: address any type errors or test failures"
 ## Execution Complete
 
 After all tasks are complete, use the `superpowers:finishing-a-development-branch` skill to:
+
 1. Verify all tests pass
 2. Create PR with summary of changes
 3. Open PR in browser
 
 **Verification checklist:**
+
 - [ ] All tests pass
 - [ ] TypeScript compiles with no errors
 - [ ] Structured format shows issues at top

@@ -1,5 +1,5 @@
-import log, { LogLevelNames } from "loglevel";
+import log, { LogLevelNames } from 'loglevel';
 
-log.setLevel((process.env.LOG_LEVEL as LogLevelNames) || "info");
+log.setLevel((process.env.LOG_LEVEL as LogLevelNames) || 'info');
 
 export default log;

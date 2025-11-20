@@ -1,13 +1,11 @@
 import { Context, Probot } from 'probot';
-import { minimatch } from 'minimatch'
+import { minimatch } from 'minimatch';
 
 import { Chat } from './chat.js';
 import log from 'loglevel';
 
 const OPENAI_API_KEY = 'OPENAI_API_KEY';
-const MAX_PATCH_COUNT = process.env.MAX_PATCH_LENGTH
-  ? +process.env.MAX_PATCH_LENGTH
-  : Infinity;
+const MAX_PATCH_COUNT = process.env.MAX_PATCH_LENGTH ? +process.env.MAX_PATCH_LENGTH : Infinity;
 
 export const robot = (app: Probot) => {
   const loadChat = async (context: Context) => {
@@ -47,178 +45,182 @@ export const robot = (app: Probot) => {
     }
   };
 
-  app.on(
-    ['pull_request.opened', 'pull_request.synchronize'],
-    async (context) => {
-      const repo = context.repo();
-      const chat = await loadChat(context);
+  app.on(['pull_request.opened', 'pull_request.synchronize'], async (context) => {
+    const repo = context.repo();
+    const chat = await loadChat(context);
 
-      if (!chat) {
-        log.info('Chat initialized failed');
-        return 'no chat';
-      }
+    if (!chat) {
+      log.info('Chat initialized failed');
+      return 'no chat';
+    }
 
-      const pull_request = context.payload.pull_request;
+    const pull_request = context.payload.pull_request;
 
-      log.debug('pull_request:', pull_request);
+    log.debug('pull_request:', pull_request);
 
-      if (
-        pull_request.state === 'closed' ||
-        pull_request.locked
-      ) {
-        log.info('invalid event payload');
-        return 'invalid event payload';
-      }
+    if (pull_request.state === 'closed' || pull_request.locked) {
+      log.info('invalid event payload');
+      return 'invalid event payload';
+    }
 
-      const target_label = process.env.TARGET_LABEL;
-      if (
-        target_label &&
-        (!pull_request.labels?.length ||
-          pull_request.labels.every((label) => label.name !== target_label))
-      ) {
-        log.info('no target label attached');
-        return 'no target label attached';
-      }
+    const target_label = process.env.TARGET_LABEL;
+    if (
+      target_label &&
+      (!pull_request.labels?.length ||
+        pull_request.labels.every((label) => label.name !== target_label))
+    ) {
+      log.info('no target label attached');
+      return 'no target label attached';
+    }
 
-      const data = await context.octokit.repos.compareCommits({
+    const data = await context.octokit.repos.compareCommits({
+      owner: repo.owner,
+      repo: repo.repo,
+      base: context.payload.pull_request.base.sha,
+      head: context.payload.pull_request.head.sha,
+    });
+
+    let { files: changedFiles, commits } = data.data;
+
+    log.debug(
+      'compareCommits, base:',
+      context.payload.pull_request.base.sha,
+      'head:',
+      context.payload.pull_request.head.sha
+    );
+    log.debug('compareCommits.commits:', commits);
+    log.debug('compareCommits.files', changedFiles);
+
+    if (context.payload.action === 'synchronize' && commits.length >= 2) {
+      const {
+        data: { files },
+      } = await context.octokit.repos.compareCommits({
         owner: repo.owner,
         repo: repo.repo,
-        base: context.payload.pull_request.base.sha,
-        head: context.payload.pull_request.head.sha,
+        base: commits[commits.length - 2].sha,
+        head: commits[commits.length - 1].sha,
       });
 
-      let { files: changedFiles, commits } = data.data;
+      changedFiles = files;
+    }
 
-      log.debug("compareCommits, base:", context.payload.pull_request.base.sha, "head:", context.payload.pull_request.head.sha)
-      log.debug("compareCommits.commits:", commits)
-      log.debug("compareCommits.files", changedFiles)
+    const ignoreList = (process.env.IGNORE || process.env.ignore || '')
+      .split('\n')
+      .filter((v) => v !== '');
+    const ignorePatterns = (process.env.IGNORE_PATTERNS || '')
+      .split(',')
+      .filter((v) => Boolean(v.trim()));
+    const includePatterns = (process.env.INCLUDE_PATTERNS || '')
+      .split(',')
+      .filter((v) => Boolean(v.trim()));
 
-      if (context.payload.action === 'synchronize' && commits.length >= 2) {
-        const {
-          data: { files },
-        } = await context.octokit.repos.compareCommits({
-          owner: repo.owner,
-          repo: repo.repo,
-          base: commits[commits.length - 2].sha,
-          head: commits[commits.length - 1].sha,
-        });
+    log.debug('ignoreList:', ignoreList);
+    log.debug('ignorePatterns:', ignorePatterns);
+    log.debug('includePatterns:', includePatterns);
 
-        changedFiles = files
+    changedFiles = changedFiles?.filter((file) => {
+      const url = new URL(file.contents_url);
+      const pathname = decodeURIComponent(url.pathname);
+      // if includePatterns is not empty, only include files that match the pattern
+      if (includePatterns.length) {
+        return matchPatterns(includePatterns, pathname);
       }
 
-      const ignoreList = (process.env.IGNORE || process.env.ignore || '')
-          .split('\n')
-          .filter((v) => v !== '');
-      const ignorePatterns = (process.env.IGNORE_PATTERNS || '').split(',').filter((v) => Boolean(v.trim()));
-      const includePatterns = (process.env.INCLUDE_PATTERNS || '').split(',').filter((v) => Boolean(v.trim()));
-
-      log.debug('ignoreList:', ignoreList);
-      log.debug('ignorePatterns:', ignorePatterns);
-      log.debug('includePatterns:', includePatterns);
-
-      changedFiles = changedFiles?.filter(
-        (file) => {
-          const url = new URL(file.contents_url)
-          const pathname = decodeURIComponent(url.pathname)
-          // if includePatterns is not empty, only include files that match the pattern
-          if (includePatterns.length) {
-            return matchPatterns(includePatterns, pathname)
-          }
-
-          if (ignoreList.includes(file.filename)) {
-            return false;
-          }
-
-          // if ignorePatterns is not empty, ignore files that match the pattern
-          if (ignorePatterns.length) {
-            return !matchPatterns(ignorePatterns, pathname)
-          }
-
-          return true
-      })
-
-      if (!changedFiles?.length) {
-        log.info('no change found');
-        return 'no change';
+      if (ignoreList.includes(file.filename)) {
+        return false;
       }
 
-      console.time('gpt cost');
+      // if ignorePatterns is not empty, ignore files that match the pattern
+      if (ignorePatterns.length) {
+        return !matchPatterns(ignorePatterns, pathname);
+      }
 
-      const ress = [];
+      return true;
+    });
 
-      for (let i = 0; i < changedFiles.length; i++) {
-        const file = changedFiles[i];
-        const patch = file.patch || '';
+    if (!changedFiles?.length) {
+      log.info('no change found');
+      return 'no change';
+    }
 
-        if (file.status !== 'modified' && file.status !== 'added') {
-          continue;
-        }
+    console.time('gpt cost');
 
-        if (!patch || patch.length > MAX_PATCH_COUNT) {
-          log.info(
-            `${file.filename} skipped caused by its diff is too large`
-          );
-          continue;
-        }
-        try {
-          const res = await chat?.codeReview(patch);
-          if (!res.lgtm && !!res.review_comment) {
-            // Calculate safe position: use first non-header line of patch
-            // Patch format: starts with @@ line, then diff lines
-            const patchLines = patch.split('\n');
-            // Find first line after @@ header (safe position for comment)
-            let position = 1;
-            for (let i = 0; i < patchLines.length; i++) {
-              if (patchLines[i].startsWith('@@')) {
-                // Position is 1-indexed, and we want the line after header
-                position = i + 2; // +1 for index→line, +1 for line after header
-                break;
-              }
-            }
-            // Ensure position is within valid range
-            position = Math.min(position, patchLines.length);
+    const ress = [];
 
-            ress.push({
-              path: file.filename,
-              body: res.review_comment,
-              position: position,
-            })
-          }
-        } catch (e) {
-          log.info(`review ${file.filename} failed`, e);
-          throw e;
-        }
+    for (let i = 0; i < changedFiles.length; i++) {
+      const file = changedFiles[i];
+      const patch = file.patch || '';
+
+      if (file.status !== 'modified' && file.status !== 'added') {
+        continue;
+      }
+
+      if (!patch || patch.length > MAX_PATCH_COUNT) {
+        log.info(`${file.filename} skipped caused by its diff is too large`);
+        continue;
       }
       try {
-        await context.octokit.pulls.createReview({
-          repo: repo.repo,
-          owner: repo.owner,
-          pull_number: context.pullRequest().pull_number,
-          body: ress.length ? "Code review by ChatGPT" : "LGTM 👍",
-          event: 'COMMENT',
-          commit_id: commits[commits.length - 1].sha,
-          comments: ress,
-        });
+        const res = await chat?.codeReview(patch);
+        if (!res.lgtm && !!res.review_comment) {
+          // Calculate safe position: use first non-header line of patch
+          // Patch format: starts with @@ line, then diff lines
+          const patchLines = patch.split('\n');
+          // Find first line after @@ header (safe position for comment)
+          let position = 1;
+          for (let i = 0; i < patchLines.length; i++) {
+            if (patchLines[i].startsWith('@@')) {
+              // Position is 1-indexed, and we want the line after header
+              position = i + 2; // +1 for index→line, +1 for line after header
+              break;
+            }
+          }
+          // Ensure position is within valid range
+          position = Math.min(position, patchLines.length);
+
+          ress.push({
+            path: file.filename,
+            body: res.review_comment,
+            position: position,
+          });
+        }
       } catch (e) {
-        log.info(`Failed to create review`, e);
+        log.info(`review ${file.filename} failed`, e);
         throw e;
       }
-
-      console.timeEnd('gpt cost');
-      log.info(
-        'successfully reviewed',
-        context.payload.pull_request.html_url
-      );
-
-      return 'success';
     }
-  );
+    try {
+      await context.octokit.pulls.createReview({
+        repo: repo.repo,
+        owner: repo.owner,
+        pull_number: context.pullRequest().pull_number,
+        body: ress.length ? 'Code review by ChatGPT' : 'LGTM 👍',
+        event: 'COMMENT',
+        commit_id: commits[commits.length - 1].sha,
+        comments: ress,
+      });
+    } catch (e) {
+      log.info(`Failed to create review`, e);
+      throw e;
+    }
+
+    console.timeEnd('gpt cost');
+    log.info('successfully reviewed', context.payload.pull_request.html_url);
+
+    return 'success';
+  });
 };
 
 const matchPatterns = (patterns: string[], path: string) => {
   return patterns.some((pattern) => {
     try {
-      return minimatch(path, pattern.startsWith('/') ? "**" + pattern : pattern.startsWith("**") ? pattern : "**/" + pattern);
+      return minimatch(
+        path,
+        pattern.startsWith('/')
+          ? '**' + pattern
+          : pattern.startsWith('**')
+            ? pattern
+            : '**/' + pattern
+      );
     } catch {
       // if the pattern is not a valid glob pattern, try to match it as a regular expression
       try {
@@ -227,5 +229,5 @@ const matchPatterns = (patterns: string[], path: string) => {
         return false;
       }
     }
-  })
-}
+  });
+};

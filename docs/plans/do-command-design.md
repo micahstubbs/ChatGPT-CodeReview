@@ -7,26 +7,32 @@ The `/do` command is a user-level custom command for Claude Code that implements
 ## Design Decisions
 
 ### Question 1: Workflow Scope
+
 **Decision:** Full SDLC Orchestration
 **Rationale:** Enforces best practices (worktrees, TDD, code review), leverages all superpowers skills, provides true "turnkey" solution from issue to PR.
 
 ### Question 2: Automation Level
+
 **Decision:** Fully Automated
 **Rationale:** Skills handle their own validation. Fast execution with minimal user interruption.
 
 ### Question 3: Planning Document Handling
+
 **Decision:** Skip If Exists
 **Rationale:** Idempotent - can re-run `/do 42` if implementation fails. Supports pre-planning workflow.
 
 ### Question 4: Worktree Selection
+
 **Decision:** Auto-select First Available
 **Rationale:** Fully automated, no prompts. Finds first clean worktree automatically.
 
 ### Question 5: Implementation Approach
+
 **Decision:** Always Use Executing-Plans Skill
 **Rationale:** Eliminates complexity detection logic. Skill adapts to task size. Review checkpoints valuable for all sizes.
 
 ### Question 6: Completion Workflow
+
 **Decision:** Verification + PR + Autonomous Review Response
 **Rationale:** Complete automation through to merge. Monitors PR and responds to reviews until clean.
 
@@ -75,16 +81,19 @@ Phase 5: Autonomous Review Response Loop
 ### Phase 1: Fetch and Plan
 
 **Fetch Issue:**
+
 ```bash
 gh issue view $ARGUMENTS --json number,title,body
 ```
 
 **Check for Plan:**
+
 - Check if `issues/<number>/PLAN.md` exists
 - If exists: Load and skip to Phase 2
 - If not: Run brainstorming and writing-plans skills
 
 **Plan Location:**
+
 - `issues/<number>/PLAN.md` (all caps)
 - Created by writing-plans skill
 - Committed before implementation
@@ -92,6 +101,7 @@ gh issue view $ARGUMENTS --json number,title,body
 ### Phase 2: Workspace Selection
 
 **Logic:**
+
 ```bash
 # For each worktree 0-4, check:
 cd ~/workspace/worktrees/ChatGPT-CodeReview-worktree-N
@@ -106,6 +116,7 @@ git checkout -b <number>/<slug> main
 ```
 
 **Branch Naming:**
+
 - Format: `<issue-number>/<slug-from-title>`
 - Example: `42/add-gpt5-support`
 - Follows project convention from CLAUDE.md
@@ -113,6 +124,7 @@ git checkout -b <number>/<slug> main
 ### Phase 3: Execute Implementation
 
 **Use Executing-Plans Skill:**
+
 ```
 1. Use SlashCommand tool: /superpowers:execute-plan
    OR use Skill tool: superpowers:executing-plans
@@ -123,6 +135,7 @@ git checkout -b <number>/<slug> main
 ```
 
 **TDD Enforcement:**
+
 - Global CLAUDE.md enforces TDD workflow
 - Tests committed before implementation
 - Verification at each step
@@ -130,6 +143,7 @@ git checkout -b <number>/<slug> main
 ### Phase 4: Verification and PR Creation
 
 **Verification:**
+
 ```
 1. Use Skill tool: superpowers:verification-before-completion
 2. Run verification commands (tests, build, linting)
@@ -138,6 +152,7 @@ git checkout -b <number>/<slug> main
 ```
 
 **PR Creation:**
+
 ```bash
 gh pr create --fill --body "$(cat <<EOF
 [Auto-generated PR body from issue]
@@ -152,6 +167,7 @@ gh pr view --web
 ### Phase 5: Autonomous Review Response
 
 **Monitoring Loop (Pseudocode):**
+
 ```python
 timeout = 30 minutes
 poll_interval = 60 seconds
@@ -184,6 +200,7 @@ announce("Re-run '/do <number>' to continue.")
 ```
 
 **Exit Conditions (ALL must be true):**
+
 1. All `gh pr checks` are green (success)
 2. No review with `state="CHANGES_REQUESTED"`
 3. Every review comment thread has at least one reply
@@ -191,6 +208,7 @@ announce("Re-run '/do <number>' to continue.")
 ## Error Handling
 
 ### Issue Not Found
+
 ```
 ❌ Issue #<number> not found or inaccessible
 → Check issue number and repository access
@@ -198,6 +216,7 @@ announce("Re-run '/do <number>' to continue.")
 ```
 
 ### No Available Worktrees
+
 ```
 ⚠️ All worktrees are in use
 → List each worktree status
@@ -205,6 +224,7 @@ announce("Re-run '/do <number>' to continue.")
 ```
 
 ### Plan Creation Fails
+
 ```
 ❌ Planning failed
 → Save partial work to issues/<number>/
@@ -213,6 +233,7 @@ announce("Re-run '/do <number>' to continue.")
 ```
 
 ### Verification Fails
+
 ```
 ❌ Tests/build failed
 → Report failures
@@ -222,6 +243,7 @@ announce("Re-run '/do <number>' to continue.")
 ```
 
 ### PR Creation Fails
+
 ```
 ❌ PR creation failed
 → Report error (conflicts, permissions)
@@ -231,6 +253,7 @@ announce("Re-run '/do <number>' to continue.")
 ```
 
 ### Review Response Fails
+
 ```
 ⚠️ Failed to respond to N comments
 → Log failures
@@ -242,6 +265,7 @@ announce("Re-run '/do <number>' to continue.")
 ## Idempotency
 
 Re-running `/do 42` on existing work:
+
 - ✅ Reuses existing `issues/42/PLAN.md`
 - ✅ Can resume failed implementation
 - ✅ Can recover from verification failures
@@ -251,6 +275,7 @@ Re-running `/do 42` on existing work:
 ## Success Criteria
 
 The `/do` command is successful when:
+
 1. ✅ User runs `/do 42` once
 2. ✅ Issue is fetched and understood
 3. ✅ Plan is created (or reused)
@@ -264,6 +289,7 @@ The `/do` command is successful when:
 ## Future Enhancements
 
 Potential future additions:
+
 - Linear ticket support (detect `ENG-123` format)
 - Auto-merge when all checks pass
 - Slack/email notifications on completion

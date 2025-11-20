@@ -35,13 +35,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Migration Guide
 
 **ReviewerAuth Interface:**
+
 ```typescript
 // Before (INSECURE)
 const auth: ReviewerAuth = {
   isVerified: true,
   login: 'user',
   hasWriteAccess: true,
-  authToken: 'ghp_token123'  // ❌ Removed
+  authToken: 'ghp_token123', // ❌ Removed
 };
 
 // After (SECURE)
@@ -49,11 +50,12 @@ const auth: ReviewerAuth = {
   isVerified: true,
   login: 'user',
   hasWriteAccess: true,
-  verifiedAt: new Date()  // ✅ Required
+  verifiedAt: new Date(), // ✅ Required
 };
 ```
 
 **LGTM Scoring:**
+
 ```typescript
 // Before (INSECURE - now throws error)
 const score = calculateQualityScore(comment, true);

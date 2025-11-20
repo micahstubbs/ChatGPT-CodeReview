@@ -20,7 +20,7 @@ describe('Issue #21: Defensive defaults for undefined severity arrays', () => {
     jest.spyOn(reviewAnalyzerModule, 'analyzeReviewSeverity').mockReturnValue({
       critical: undefined as any,
       warnings: [],
-      suggestions: []
+      suggestions: [],
     });
 
     const reviewComment = 'Test comment';
@@ -41,7 +41,7 @@ describe('Issue #21: Defensive defaults for undefined severity arrays', () => {
     jest.spyOn(reviewAnalyzerModule, 'analyzeReviewSeverity').mockReturnValue({
       critical: [],
       warnings: null as any,
-      suggestions: []
+      suggestions: [],
     });
 
     const reviewComment = 'Test comment';
@@ -60,7 +60,7 @@ describe('Issue #21: Defensive defaults for undefined severity arrays', () => {
     jest.spyOn(reviewAnalyzerModule, 'analyzeReviewSeverity').mockReturnValue({
       critical: [],
       warnings: [],
-      suggestions: undefined as any
+      suggestions: undefined as any,
     });
 
     const reviewComment = 'Test comment';
@@ -79,7 +79,7 @@ describe('Issue #21: Defensive defaults for undefined severity arrays', () => {
     jest.spyOn(reviewAnalyzerModule, 'analyzeReviewSeverity').mockReturnValue({
       critical: null as any,
       warnings: null as any,
-      suggestions: null as any
+      suggestions: null as any,
     });
 
     const reviewComment = 'Test comment';
@@ -98,7 +98,7 @@ describe('Issue #21: Defensive defaults for undefined severity arrays', () => {
     jest.spyOn(reviewAnalyzerModule, 'analyzeReviewSeverity').mockReturnValue({
       critical: undefined as any,
       warnings: undefined as any,
-      suggestions: undefined as any
+      suggestions: undefined as any,
     });
 
     const reviewComment = 'Test comment';
@@ -117,7 +117,7 @@ describe('Issue #21: Defensive defaults for undefined severity arrays', () => {
     jest.spyOn(reviewAnalyzerModule, 'analyzeReviewSeverity').mockReturnValue({
       critical: undefined as any,
       warnings: null as any,
-      suggestions: []
+      suggestions: [],
     });
 
     const reviewComment = 'LGTM!';
@@ -125,7 +125,7 @@ describe('Issue #21: Defensive defaults for undefined severity arrays', () => {
       isVerified: true,
       login: 'reviewer',
       hasWriteAccess: true,
-      verifiedAt: new Date()
+      verifiedAt: new Date(),
     };
 
     let result: any;
@@ -142,7 +142,7 @@ describe('Issue #21: Defensive defaults for undefined severity arrays', () => {
     jest.spyOn(reviewAnalyzerModule, 'analyzeReviewSeverity').mockReturnValue({
       critical: undefined as any,
       warnings: undefined as any,
-      suggestions: undefined as any
+      suggestions: undefined as any,
     });
 
     const reviewComment = 'Test comment';

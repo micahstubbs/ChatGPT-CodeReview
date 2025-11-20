@@ -102,12 +102,12 @@ jobs:
             Prioritize findings by risk to production systems.
 
           # Model Parameters - Optimized for accuracy
-          temperature: 0.5      # Lower for more consistent, focused analysis
-          top_p: 0.85          # More deterministic for critical reviews
-          max_tokens: 15000    # Allow comprehensive detailed reviews
+          temperature: 0.5 # Lower for more consistent, focused analysis
+          top_p: 0.85 # More deterministic for critical reviews
+          max_tokens: 15000 # Allow comprehensive detailed reviews
 
           # Review Scope - Comprehensive
-          MAX_PATCH_LENGTH: 25000  # Allow larger diffs for GPT-5 Pro's reasoning
+          MAX_PATCH_LENGTH: 25000 # Allow larger diffs for GPT-5 Pro's reasoning
 
           # Include all production code
           INCLUDE_PATTERNS: src/**/*,lib/**/*,app/**/*,api/**/*,config/**/*

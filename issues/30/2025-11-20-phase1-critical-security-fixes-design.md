@@ -12,16 +12,19 @@ This design addresses three critical security vulnerabilities in the review-anal
 ## Issues Addressed
 
 ### Issue #25: SECURITY BUG - verifyReviewerAuthorization returns isVerified:true on 404
+
 - **Severity:** CRITICAL
 - **Impact:** Allows unauthorized reviewers to bypass authorization checks
 - **File:** `src/review-analyzer.ts` line 297
 
 ### Issue #26: SECURITY - Remove GitHub PAT exposure in authToken field
+
 - **Severity:** HIGH
 - **Impact:** GitHub PAT can be propagated/stored, risking credential leakage
 - **File:** `src/review-analyzer.ts` lines 52, 300, 320
 
 ### Issue #14: SECURITY - Implement reviewer authorization for LGTM scoring
+
 - **Severity:** HIGH
 - **Impact:** LGTM can be spoofed without server-side verification
 - **File:** `src/review-analyzer.ts` lines 123-172
@@ -33,12 +36,14 @@ This design addresses three critical security vulnerabilities in the review-anal
 **Chosen Approach:** Hybrid Enforcement
 
 **Rationale:**
+
 - Prevents security issues immediately (no LGTM without auth)
 - Provides clear error messages to developers
 - Allows gradual migration (can still call function without LGTM)
 - Makes the security requirement explicit
 
 **Implementation:**
+
 - Throw error if `lgtm=true` without `reviewerAuth`
 - Throw error if `lgtm=true` with `reviewerAuth.isVerified=false`
 - Backward compatible for non-LGTM use cases
@@ -48,6 +53,7 @@ This design addresses three critical security vulnerabilities in the review-anal
 **Chosen Approach:** Opaque Attestation with Timestamp
 
 **Rationale:**
+
 - Completely removes PAT exposure risk
 - Provides useful debugging/auditing information
 - Simple to implement (just add a timestamp)
@@ -55,6 +61,7 @@ This design addresses three critical security vulnerabilities in the review-anal
 - Makes it clear when authorization was verified
 
 **Implementation:**
+
 - Remove `authToken?: string` field
 - Add `verifiedAt: Date` field
 - Never return the GitHub token from `verifyReviewerAuthorization()`
@@ -64,31 +71,34 @@ This design addresses three critical security vulnerabilities in the review-anal
 ### 1. Fix Critical 404 Bug (Issue #25)
 
 **Current Code (VULNERABLE):**
+
 ```typescript
 if (response.status === 404) {
   return {
     isVerified: true, // BUG: Should be false!
     login: githubLogin,
     hasWriteAccess: false,
-    authToken: githubToken
+    authToken: githubToken,
   };
 }
 ```
 
 **Fixed Code:**
+
 ```typescript
 if (response.status === 404) {
   // User is not a collaborator in this repository
   return {
-    isVerified: false,  // ← Fixed: 404 means NOT verified
+    isVerified: false, // ← Fixed: 404 means NOT verified
     login: githubLogin,
     hasWriteAccess: false,
-    verifiedAt: new Date()
+    verifiedAt: new Date(),
   };
 }
 ```
 
 **Why This Works:**
+
 - `isVerified: false` correctly indicates user is NOT an authorized collaborator
 - Maintains fail-secure behavior (deny by default)
 - 404 response is expected for non-collaborators
@@ -96,16 +106,18 @@ if (response.status === 404) {
 ### 2. Remove PAT Exposure (Issue #26)
 
 **Current Interface (VULNERABLE):**
+
 ```typescript
 export interface ReviewerAuth {
   isVerified: boolean;
   login: string;
   hasWriteAccess: boolean;
-  authToken?: string;  // ← SECURITY RISK
+  authToken?: string; // ← SECURITY RISK
 }
 ```
 
 **Fixed Interface:**
+
 ```typescript
 export interface ReviewerAuth {
   /**
@@ -127,11 +139,12 @@ export interface ReviewerAuth {
    * Timestamp when authorization was verified
    * Used for auditing and cache invalidation
    */
-  verifiedAt: Date;  // ← Replaces authToken
+  verifiedAt: Date; // ← Replaces authToken
 }
 ```
 
 **Changes Required:**
+
 1. Update `ReviewerAuth` interface (line 32-53)
 2. Remove `authToken: githubToken` from all return statements (lines 300, 320)
 3. Add `verifiedAt: new Date()` to all return statements
@@ -140,6 +153,7 @@ export interface ReviewerAuth {
 ### 3. Enforce LGTM Authorization (Issue #14)
 
 **Add Security Checks:**
+
 ```typescript
 export function calculateQualityScore(
   reviewComment: string,
@@ -151,7 +165,7 @@ export function calculateQualityScore(
   if (lgtm && !reviewerAuth) {
     throw new Error(
       'SECURITY ERROR: LGTM requires verified reviewer authorization. ' +
-      'Call verifyReviewerAuthorization() first and pass the result as reviewerAuth parameter.'
+        'Call verifyReviewerAuthorization() first and pass the result as reviewerAuth parameter.'
     );
   }
 
@@ -159,7 +173,7 @@ export function calculateQualityScore(
   if (lgtm && reviewerAuth && !reviewerAuth.isVerified) {
     throw new Error(
       'SECURITY ERROR: LGTM requires isVerified=true in reviewerAuth. ' +
-      'The provided authorization is not verified.'
+        'The provided authorization is not verified.'
     );
   }
 
@@ -177,7 +191,7 @@ export function calculateQualityScore(
 
   // Penalty for LGTM with critical issues
   if (isAuthorizedLgtm && severity.critical.length > 0) {
-    score -= 10;  // Authorized reviewer made a mistake
+    score -= 10; // Authorized reviewer made a mistake
   }
 
   // ... rest of scoring logic ...
@@ -185,6 +199,7 @@ export function calculateQualityScore(
 ```
 
 **Remove Deprecation Warnings:**
+
 - Remove console.warn() at lines 167-172 (now enforced with errors)
 - Remove console.warn() at lines 178-182 (now enforced with errors)
 
@@ -217,6 +232,7 @@ Create `test/review-analyzer.test.ts` with tests for:
 **Phase 2: Implement Fixes (GREEN)**
 
 Implement changes in order:
+
 1. Fix #26 first (interface change) - forces all code to update
 2. Fix #25 second (404 bug) - straightforward change
 3. Fix #14 last (LGTM enforcement) - builds on interface changes
@@ -247,21 +263,26 @@ Implement changes in order:
 ## Files Modified
 
 ### Source Files
+
 - `src/review-analyzer.ts` - Main implementation
 
 ### Test Files
+
 - `test/review-analyzer.test.ts` - New comprehensive test suite
 
 ### Generated Files (auto-updated on build)
+
 - `action/src/review-analyzer.d.ts` - TypeScript declarations
 
 ## Breaking Changes
 
 ### ReviewerAuth Interface
+
 - **BREAKING:** Removed `authToken?: string` field
 - **BREAKING:** Added `verifiedAt: Date` field (required)
 
 **Migration Guide:**
+
 ```typescript
 // Before (INSECURE)
 const auth = await verifyReviewerAuthorization(...);
@@ -273,10 +294,12 @@ console.log(auth.verifiedAt); // Timestamp of verification
 ```
 
 ### calculateQualityScore Function
+
 - **BREAKING:** Throws error if `lgtm=true` without `reviewerAuth`
 - **BREAKING:** Throws error if `lgtm=true` with `isVerified=false`
 
 **Migration Guide:**
+
 ```typescript
 // Before (INSECURE)
 const score = calculateQualityScore(comment, true);
@@ -289,11 +312,13 @@ const score = calculateQualityScore(comment, true, auth);
 ## Security Impact
 
 ### Before Fixes
+
 - ❌ Unauthorized users could bypass security checks (404 bug)
 - ❌ GitHub PATs could be logged/stored/exposed
 - ❌ LGTM could be spoofed without verification
 
 ### After Fixes
+
 - ✅ 404 correctly denies authorization
 - ✅ No credentials in return values
 - ✅ LGTM requires verified authorization
