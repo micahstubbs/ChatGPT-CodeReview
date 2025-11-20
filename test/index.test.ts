@@ -1,15 +1,15 @@
-import nock from "nock";
-import { robot } from "../src/bot";
-import { Probot, ProbotOctokit } from "probot";
-import fs from "fs";
-import path from "path";
+import nock from 'nock';
+import { robot } from '../src/bot';
+import { Probot, ProbotOctokit } from 'probot';
+import fs from 'fs';
+import path from 'path';
 
 const privateKey = fs.readFileSync(
-  path.join(process.cwd(), "test/fixtures/mock-cert.pem"),
-  "utf-8"
+  path.join(process.cwd(), 'test/fixtures/mock-cert.pem'),
+  'utf-8'
 );
 
-describe("ChatGPT Code Review Bot", () => {
+describe('ChatGPT Code Review Bot', () => {
   let probot: Probot;
 
   beforeEach(() => {
@@ -27,12 +27,12 @@ describe("ChatGPT Code Review Bot", () => {
     probot.load(robot);
   });
 
-  test("bot loads successfully", () => {
+  test('bot loads successfully', () => {
     // Verify the bot loaded without errors
     expect(probot).toBeDefined();
   });
 
-  test("bot registers pull_request event handlers", () => {
+  test('bot registers pull_request event handlers', () => {
     // The bot should have registered event handlers
     // This is a basic smoke test to ensure the bot initializes
     expect(probot).toBeDefined();

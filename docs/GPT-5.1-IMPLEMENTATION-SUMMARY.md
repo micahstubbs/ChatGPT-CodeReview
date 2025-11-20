@@ -10,6 +10,7 @@ Successfully added support for GPT-5.1, GPT-5.1-Codex, GPT-5.1-Codex-Mini, and G
 ## Investigation Results
 
 ### Fork Network Analysis
+
 - **Total forks examined:** 460
 - **Forks with GPT-5.1 support found:** 0
 - **Reason:** GPT-5.1 models were only announced 5 days ago (November 13, 2025)
@@ -27,7 +28,9 @@ The existing ChatGPT-CodeReview architecture already supports GPT-5.1 models thr
 ### Files Modified
 
 #### 1. README.md
+
 **Changes:**
+
 - Updated default model recommendation from `gpt-3.5-turbo` to `gpt-4o`
 - Added comprehensive list of supported models including GPT-5.1 variants
 - Added cost and API access warnings for GPT-5.1 models
@@ -35,7 +38,9 @@ The existing ChatGPT-CodeReview architecture already supports GPT-5.1 models thr
 **Location:** Lines 73-78
 
 #### 2. .env.example
+
 **Changes:**
+
 - Added inline documentation for MODEL variable with examples
 - Added dedicated GPT-5.1 models section with descriptions
 - Documented recommended use cases for each GPT-5.1 variant
@@ -45,8 +50,10 @@ The existing ChatGPT-CodeReview architecture already supports GPT-5.1 models thr
 ### New Files Created
 
 #### 3. GPT-5.1-USAGE-GUIDE.md
+
 **Purpose:** Comprehensive guide for using GPT-5.1 models
 **Contents:**
+
 - Detailed model specifications (context windows, pricing, features)
 - Configuration examples for GitHub Actions and self-hosted deployments
 - Cost comparison and optimization strategies
@@ -58,28 +65,35 @@ The existing ChatGPT-CodeReview architecture already supports GPT-5.1 models thr
 **Size:** 315 lines
 
 #### 4. examples/gpt-5.1-codex-workflow.yml
+
 **Purpose:** Ready-to-use GitHub Actions workflow for GPT-5.1-Codex
 **Features:**
+
 - Optimized configuration for best quality code reviews
 - Detailed comments explaining each setting
 - Security-focused prompt template
 - Recommended file patterns
 
 #### 5. examples/gpt-5.1-codex-mini-workflow.yml
+
 **Purpose:** Cost-optimized workflow using GPT-5.1-Codex-Mini
 **Features:**
+
 - Budget-friendly configuration
 - Cost optimization strategies
 - Suitable for high-volume repositories
 - Balanced quality/cost trade-off
 
 #### 6. GPT-5.1-IMPLEMENTATION-SUMMARY.md
+
 **Purpose:** This summary document
 **Contents:** Complete overview of the implementation
 
 #### 7. GPT-5-FORK-INVESTIGATION.md
+
 **Purpose:** Detailed investigation report
 **Contents:**
+
 - Methodology and search strategies
 - Fork network analysis results
 - Technical compatibility assessment
@@ -90,12 +104,12 @@ The existing ChatGPT-CodeReview architecture already supports GPT-5.1 models thr
 
 ## Models Supported
 
-| Model | ID | Best For | Cost |
-|-------|----|---------| -----|
-| GPT-5.1 | `gpt-5.1` | General code review | $1.25/$10 per 1M tokens |
-| GPT-5.1-Codex | `gpt-5.1-codex` | Advanced code review (recommended) | $1.25/$10 per 1M tokens |
-| GPT-5.1-Codex-Mini | `gpt-5.1-codex-mini` | Cost-effective reviews | $0.25/$2 per 1M tokens |
-| GPT-5 Pro | `gpt-5-pro` | Critical reviews, security audits | $15/$120 per 1M tokens |
+| Model              | ID                   | Best For                           | Cost                    |
+| ------------------ | -------------------- | ---------------------------------- | ----------------------- |
+| GPT-5.1            | `gpt-5.1`            | General code review                | $1.25/$10 per 1M tokens |
+| GPT-5.1-Codex      | `gpt-5.1-codex`      | Advanced code review (recommended) | $1.25/$10 per 1M tokens |
+| GPT-5.1-Codex-Mini | `gpt-5.1-codex-mini` | Cost-effective reviews             | $0.25/$2 per 1M tokens  |
+| GPT-5 Pro          | `gpt-5-pro`          | Critical reviews, security audits  | $15/$120 per 1M tokens  |
 
 ## Usage Examples
 
@@ -121,22 +135,26 @@ LANGUAGE=English
 ## Key Features
 
 ### 1. Zero Migration Effort
+
 - No code changes required
 - Just update the `MODEL` environment variable
 - Backward compatible with existing configurations
 
 ### 2. Comprehensive Documentation
+
 - Step-by-step usage guide
 - Cost optimization strategies
 - Troubleshooting section
 - Real-world examples
 
 ### 3. Multiple Model Options
+
 - High-quality option: `gpt-5.1-codex`
 - Budget-friendly option: `gpt-5.1-codex-mini`
 - General-purpose option: `gpt-5.1`
 
 ### 4. Production-Ready Examples
+
 - Copy-paste workflow files
 - Best practice configurations
 - Security-focused prompts
@@ -144,6 +162,7 @@ LANGUAGE=English
 ## Performance Benefits
 
 Using GPT-5.1-Codex provides:
+
 - ✅ **Enhanced reasoning** for complex code logic
 - ✅ **Improved bug detection** accuracy
 - ✅ **Better context understanding** (400K token window)
@@ -156,15 +175,16 @@ Using GPT-5.1-Codex provides:
 
 ### Comparison with Existing Models
 
-| Model | Input Cost | Output Cost | Relative Cost |
-|-------|-----------|-------------|---------------|
-| gpt-3.5-turbo | $0.50 | $1.50 | 1x (baseline) |
-| gpt-4o-mini | $0.15 | $0.60 | 0.3x |
-| gpt-4o | $2.50 | $10.00 | 5x |
-| **gpt-5.1-codex** | **$1.25** | **$10.00** | **2.5x** |
-| **gpt-5.1-codex-mini** | **$0.25** | **$2.00** | **0.5x** |
+| Model                  | Input Cost | Output Cost | Relative Cost |
+| ---------------------- | ---------- | ----------- | ------------- |
+| gpt-3.5-turbo          | $0.50      | $1.50       | 1x (baseline) |
+| gpt-4o-mini            | $0.15      | $0.60       | 0.3x          |
+| gpt-4o                 | $2.50      | $10.00      | 5x            |
+| **gpt-5.1-codex**      | **$1.25**  | **$10.00**  | **2.5x**      |
+| **gpt-5.1-codex-mini** | **$0.25**  | **$2.00**   | **0.5x**      |
 
 ### Recommendation
+
 - Use **gpt-5.1-codex-mini** for daily PRs (50% cost of gpt-3.5-turbo)
 - Use **gpt-5.1-codex** for important features and refactoring
 - Reserve **gpt-5-pro** for critical security audits and production releases
@@ -172,15 +192,18 @@ Using GPT-5.1-Codex provides:
 ## Known Limitations
 
 ### 1. API Access Required
+
 - GPT-5.1 models require OpenAI API access (not just ChatGPT subscription)
 - Currently in public preview
 - Some users report 400 errors due to account restrictions
 
 ### 2. GitHub Models Support
+
 - Not yet available through GitHub Models inference endpoint
 - Use standard OpenAI API endpoint for now
 
 ### 3. Cost
+
 - Higher than gpt-4o-mini
 - Use cost optimization strategies in the usage guide
 
@@ -189,6 +212,7 @@ Using GPT-5.1-Codex provides:
 ### Error: "The 'gpt-5.1-codex' model is not supported"
 
 **Solutions:**
+
 1. Verify your OpenAI account has API access
 2. Check your API key has GPT-5.1 permissions
 3. Ensure you're using the OpenAI API (not Azure or GitHub Models)
@@ -210,13 +234,14 @@ See [GPT-5.1-USAGE-GUIDE.md](./GPT-5.1-USAGE-GUIDE.md) for detailed troubleshoot
 ```javascript
 // This code has intentional issues for testing
 function divide(a, b) {
-  return a / b;  // No zero check!
+  return a / b; // No zero check!
 }
 
-const apiKey = "sk-1234567890";  // Hardcoded secret!
+const apiKey = 'sk-1234567890'; // Hardcoded secret!
 ```
 
 GPT-5.1-Codex should identify:
+
 - ❌ Missing zero division check
 - ❌ Hardcoded API key (security issue)
 - ❌ No input validation
@@ -238,6 +263,7 @@ The `MODEL` parameter is passed directly to the OpenAI SDK without validation, e
 ### Supported Providers
 
 The implementation works with:
+
 - ✅ OpenAI API (standard)
 - ✅ Azure OpenAI (when GPT-5.1 is available)
 - ⏳ GitHub Models (pending availability)
@@ -246,17 +272,20 @@ The implementation works with:
 ## Next Steps for Users
 
 ### 1. Try GPT-5.1-Codex
+
 ```bash
 # Update your workflow or .env file
 MODEL=gpt-5.1-codex
 ```
 
 ### 2. Review the Documentation
+
 - Read [GPT-5.1-USAGE-GUIDE.md](./GPT-5.1-USAGE-GUIDE.md)
 - Check example workflows in `examples/`
 - Review cost optimization strategies
 
 ### 3. Share Feedback
+
 - Report issues on GitHub
 - Share your experience with the community
 - Contribute improvements
@@ -264,6 +293,7 @@ MODEL=gpt-5.1-codex
 ## Contributing
 
 Found an issue or want to improve GPT-5.1 support?
+
 1. Open an issue: [github.com/anc95/ChatGPT-CodeReview/issues](https://github.com/anc95/ChatGPT-CodeReview/issues)
 2. Submit a PR with improvements
 3. Share your configuration examples
@@ -271,6 +301,7 @@ Found an issue or want to improve GPT-5.1 support?
 ## References
 
 ### Documentation Created
+
 - ✅ [GPT-5.1-USAGE-GUIDE.md](./GPT-5.1-USAGE-GUIDE.md) - Comprehensive user guide (now includes GPT-5 Pro)
 - ✅ [GPT-5-FORK-INVESTIGATION.md](./GPT-5-FORK-INVESTIGATION.md) - Investigation report
 - ✅ [examples/gpt-5.1-codex-workflow.yml](./examples/gpt-5.1-codex-workflow.yml) - Best quality workflow
@@ -278,6 +309,7 @@ Found an issue or want to improve GPT-5.1 support?
 - ✅ [examples/gpt-5-pro-workflow.yml](./examples/gpt-5-pro-workflow.yml) - Premium/critical reviews workflow
 
 ### Official Resources
+
 - [OpenAI GPT-5.1 Announcement](https://openai.com/index/gpt-5-1/)
 - [OpenAI GPT-5.1-Codex Docs](https://platform.openai.com/docs/models/gpt-5.1-codex)
 - [GitHub Copilot GPT-5.1 Preview](https://github.blog/changelog/2025-11-13-openais-gpt-5-1-gpt-5-1-codex-and-gpt-5-1-codex-mini-are-now-in-public-preview-for-github-copilot/)
