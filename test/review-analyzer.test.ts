@@ -521,4 +521,228 @@ describe('review-analyzer', () => {
       }).not.toThrow();
     });
   });
+
+  describe('Issue #11: Breakdown score calculation', () => {
+    describe('Security breakdown', () => {
+      test('should start from 100 and deduct only security-related critical issues', () => {
+        // Review with 1 security critical issue (should deduct 40 points)
+        const reviewComment = 'CRITICAL: Security vulnerability found in authentication logic.';
+        const result = calculateQualityScore(reviewComment, false);
+
+        // Security breakdown should be: 100 - (1 * 40) = 60
+        expect(result.breakdown.security).toBe(60);
+      });
+
+      test('should return 100 when there are no security issues', () => {
+        // Review with non-security issues
+        const reviewComment = 'Warning: Consider refactoring this function for better maintainability.';
+        const result = calculateQualityScore(reviewComment, false);
+
+        // Security breakdown should remain 100 (no security issues)
+        expect(result.breakdown.security).toBe(100);
+      });
+
+      test('should not be affected by non-security critical issues', () => {
+        // Review with non-security critical issue
+        const reviewComment = 'CRITICAL: Performance bottleneck detected in database queries.';
+        const result = calculateQualityScore(reviewComment, false);
+
+        // Security breakdown should remain 100 (no security issues)
+        expect(result.breakdown.security).toBe(100);
+      });
+
+      test('should handle multiple security critical issues', () => {
+        // Review with 2 security critical issues
+        const reviewComment = 'CRITICAL: Security flaw in authentication. CRITICAL: Security issue with input validation.';
+        const result = calculateQualityScore(reviewComment, false);
+
+        // Security breakdown should be: 100 - (2 * 40) = 20
+        expect(result.breakdown.security).toBe(20);
+      });
+
+      test('should not go below zero', () => {
+        // Review with 3 security critical issues (would be -20 without Math.max)
+        const reviewComment = 'CRITICAL: Security flaw 1. CRITICAL: Security flaw 2. CRITICAL: Security flaw 3.';
+        const result = calculateQualityScore(reviewComment, false);
+
+        // Security breakdown should be: Math.max(0, 100 - (3 * 40)) = 0
+        expect(result.breakdown.security).toBe(0);
+      });
+    });
+
+    describe('Maintainability breakdown', () => {
+      test('should start from 100 and deduct only for warnings', () => {
+        // Review with 2 warnings (should deduct 10 points each)
+        const reviewComment = 'Warning: Code duplication detected. Warning: Complex function should be refactored.';
+        const result = calculateQualityScore(reviewComment, false);
+
+        // Maintainability breakdown should be: 100 - (2 * 10) = 80
+        expect(result.breakdown.maintainability).toBe(80);
+      });
+
+      test('should return 100 when there are no warnings', () => {
+        // Review with only suggestions
+        const reviewComment = 'Suggestion: Consider adding documentation.';
+        const result = calculateQualityScore(reviewComment, false);
+
+        // Maintainability breakdown should remain 100 (no warnings)
+        expect(result.breakdown.maintainability).toBe(100);
+      });
+
+      test('should not be affected by overall score deductions', () => {
+        // Review with critical issues that lower overall score, but only 1 warning
+        const reviewComment = 'CRITICAL: Major bug. CRITICAL: Another bug. Warning: Minor code smell.';
+        const result = calculateQualityScore(reviewComment, false);
+
+        // Even though overall score is low, maintainability should only reflect warnings
+        // Maintainability breakdown should be: 100 - (1 * 10) = 90
+        expect(result.breakdown.maintainability).toBe(90);
+      });
+
+      test('should count all warnings including performance and others', () => {
+        // Review with multiple types of warnings
+        const reviewComment = 'Warning: Performance issue. Warning: Code duplication. Warning: Lack of error handling.';
+        const result = calculateQualityScore(reviewComment, false);
+
+        // Maintainability breakdown should be: 100 - (3 * 10) = 70
+        expect(result.breakdown.maintainability).toBe(70);
+      });
+    });
+
+    describe('Performance breakdown', () => {
+      test('should start from 100 and deduct only performance-related warnings', () => {
+        // Review with 1 performance warning (should deduct 20 points)
+        const reviewComment = 'Warning: Performance bottleneck in loop. Consider optimization.';
+        const result = calculateQualityScore(reviewComment, false);
+
+        // Performance breakdown should be: 100 - (1 * 20) = 80
+        expect(result.breakdown.performance).toBe(80);
+      });
+
+      test('should return 100 when there are no performance warnings', () => {
+        // Review with non-performance warnings
+        const reviewComment = 'Warning: Code duplication detected.';
+        const result = calculateQualityScore(reviewComment, false);
+
+        // Performance breakdown should remain 100 (no performance warnings)
+        expect(result.breakdown.performance).toBe(100);
+      });
+
+      test('should handle multiple performance warnings', () => {
+        // Review with 2 performance warnings
+        const reviewComment = 'Warning: Performance issue in database query. Warning: Performance degradation in loop.';
+        const result = calculateQualityScore(reviewComment, false);
+
+        // Performance breakdown should be: 100 - (2 * 20) = 60
+        expect(result.breakdown.performance).toBe(60);
+      });
+
+      test('should not be affected by non-performance issues', () => {
+        // Review with multiple non-performance issues
+        const reviewComment = 'CRITICAL: Security flaw. Warning: Code duplication. Warning: Lack of tests.';
+        const result = calculateQualityScore(reviewComment, false);
+
+        // Performance breakdown should remain 100 (no performance warnings)
+        expect(result.breakdown.performance).toBe(100);
+      });
+    });
+
+    describe('Testability breakdown', () => {
+      test('should start from 100 and deduct only test-related suggestions', () => {
+        // Review with 2 test suggestions (should deduct 10 points each)
+        const reviewComment = 'Suggestion: Add unit tests for this function. Suggestion: Test edge cases.';
+        const result = calculateQualityScore(reviewComment, false);
+
+        // Testability breakdown should be: 100 - (2 * 10) = 80
+        expect(result.breakdown.testability).toBe(80);
+      });
+
+      test('should return 100 when there are no test-related suggestions', () => {
+        // Review with non-test suggestions
+        const reviewComment = 'Suggestion: Add documentation. Suggestion: Consider using a more descriptive variable name.';
+        const result = calculateQualityScore(reviewComment, false);
+
+        // Testability breakdown should remain 100 (no test suggestions)
+        expect(result.breakdown.testability).toBe(100);
+      });
+
+      test('should handle multiple test-related suggestions', () => {
+        // Review with 3 test suggestions
+        const reviewComment = 'Suggestion: Add tests. Suggestion: Test error handling. Suggestion: Test edge cases.';
+        const result = calculateQualityScore(reviewComment, false);
+
+        // Testability breakdown should be: 100 - (3 * 10) = 70
+        expect(result.breakdown.testability).toBe(70);
+      });
+
+      test('should not be affected by other issues', () => {
+        // Review with various issues but no test suggestions
+        const reviewComment = 'CRITICAL: Security issue. Warning: Performance problem. Suggestion: Add documentation.';
+        const result = calculateQualityScore(reviewComment, false);
+
+        // Testability breakdown should remain 100 (no test suggestions)
+        expect(result.breakdown.testability).toBe(100);
+      });
+    });
+
+    describe('Breakdown independence', () => {
+      test('breakdown scores should be independent of overall score', () => {
+        // Review with heavy maintainability penalties (many warnings)
+        // but no security issues
+        const reviewComment = 'Warning: Issue 1. Warning: Issue 2. Warning: Issue 3. Warning: Issue 4. Warning: Issue 5.';
+        const result = calculateQualityScore(reviewComment, false);
+
+        // Overall score should be low: 100 - (5 * 15) = 25
+        expect(result.score).toBe(25);
+
+        // But security breakdown should remain 100 (no security issues)
+        expect(result.breakdown.security).toBe(100);
+
+        // And testability should remain 100 (no test suggestions)
+        expect(result.breakdown.testability).toBe(100);
+
+        // Only maintainability should be affected: 100 - (5 * 10) = 50
+        expect(result.breakdown.maintainability).toBe(50);
+      });
+
+      test('each dimension should reflect only its relevant issues', () => {
+        // Complex review with issues in all dimensions
+        const reviewComment =
+          'CRITICAL: Security vulnerability found. ' +
+          'Warning: Performance bottleneck detected. ' +
+          'Warning: Code duplication. ' +
+          'Suggestion: Add test coverage.';
+        const result = calculateQualityScore(reviewComment, false);
+
+        // Security: 100 - (1 * 40) = 60
+        expect(result.breakdown.security).toBe(60);
+
+        // Maintainability: 100 - (2 warnings * 10) = 80
+        expect(result.breakdown.maintainability).toBe(80);
+
+        // Performance: 100 - (1 performance warning * 20) = 80
+        expect(result.breakdown.performance).toBe(80);
+
+        // Testability: 100 - (1 test suggestion * 10) = 90
+        expect(result.breakdown.testability).toBe(90);
+      });
+
+      test('breakdown should not inherit penalties from other dimensions', () => {
+        // Review with only security issues
+        const reviewComment = 'CRITICAL: Security flaw. CRITICAL: Another security issue.';
+        const result = calculateQualityScore(reviewComment, false);
+
+        // Overall score: 100 - (2 * 30) = 40
+        expect(result.score).toBe(40);
+
+        // Security breakdown: 100 - (2 * 40) = 20
+        expect(result.breakdown.security).toBe(20);
+
+        // Other dimensions should not be affected
+        expect(result.breakdown.maintainability).toBe(100);
+        expect(result.breakdown.performance).toBe(100);
+        expect(result.breakdown.testability).toBe(100);
+      });
+    });
+  });
 });
