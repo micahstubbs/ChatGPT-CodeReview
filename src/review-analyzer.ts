@@ -5,6 +5,22 @@
 
 // Using native fetch (Node 18+) - types from @types/node
 
+/**
+ * Scoring configuration constants
+ * Extracted to module-level for maintainability and testability
+ */
+const SCORING_CONFIG = {
+  CRITICAL_BASE_WEIGHT: 30,
+  CRITICAL_THRESHOLD: 3,
+  // Softening factor: 5/30 = 0.1667 (approximately 16.67% reduction)
+  // Results in softened weight of 25 (30 - 5)
+  SOFTEN_FACTOR: 5 / 30,
+  WARNING_WEIGHT: 15,
+  SUGGESTION_WEIGHT: 5,
+  LGTM_BONUS: 10,
+  LGTM_WITH_CRITICALS_PENALTY: 10
+} as const;
+
 export interface ReviewMetrics {
   totalReviews: number;
   criticalIssues: number;
@@ -70,8 +86,9 @@ export function analyzeReviewSeverity(reviewComment: string): {
     throw new Error('Invalid input: reviewComment must be a string');
   }
 
-  // Check if input is empty
-  if (reviewComment.length === 0) {
+  // Check if input is empty or whitespace-only
+  // Use regex \S to match all ECMAScript whitespace chars (including NBSP, form feed, etc.)
+  if (!/\S/.test(reviewComment)) {
     throw new Error('Invalid input: reviewComment cannot be empty');
   }
 
@@ -82,21 +99,22 @@ export function analyzeReviewSeverity(reviewComment: string): {
   }
 
   // Check maximum number of lines (1000 lines) to prevent DoS
-  // Count newlines directly to avoid allocating intermediate array
+  // Count newlines and handle trailing newline correctly
+  // Use early-exit to avoid processing malicious oversized inputs
   const MAX_LINES = 1000;
   let lineCount = 0;
   for (let i = 0; i < reviewComment.length; i++) {
     if (reviewComment[i] === '\n') {
       lineCount++;
-      // Early return if we've exceeded the limit (optimization)
+      // Early exit if exceeded (DoS protection)
       if (lineCount > MAX_LINES) {
         throw new Error(`Invalid input: reviewComment exceeds maximum of ${MAX_LINES} lines`);
       }
     }
   }
-  // If string doesn't end with newline, we need to count the last line
-  // If it does end with newline, the newline count is already correct
-  if (reviewComment.length > 0 && reviewComment[reviewComment.length - 1] !== '\n') {
+  // If string doesn't end with newline, add 1 for the last line
+  // If it ends with newline, lineCount already represents number of lines
+  if (reviewComment[reviewComment.length - 1] !== '\n') {
     lineCount++;
     if (lineCount > MAX_LINES) {
       throw new Error(`Invalid input: reviewComment exceeds maximum of ${MAX_LINES} lines`);
@@ -168,6 +186,14 @@ export function calculateQualityScore(
   reviewerAuth?: ReviewerAuth,
   _requiredApprovers: number = 1
 ): CodeQualityScore {
+  // SECURITY: Validate lgtm parameter type before making security decisions
+  if (typeof lgtm !== 'boolean') {
+    throw new TypeError(
+      'Invalid input: lgtm parameter must be a boolean. ' +
+      `Received ${typeof lgtm}: ${String(lgtm)}`
+    );
+  }
+
   // SECURITY: Enforce authorization when LGTM is claimed
   if (lgtm && !reviewerAuth) {
     throw new Error(
@@ -193,16 +219,23 @@ export function calculateQualityScore(
 
   let score = 100;
 
-  // Deduct points based on issues found with severity weighting
-  score -= critical.length * 30; // Critical issues: -30 points each
-  score -= warnings.length * 15; // Warnings: -15 points each
-  score -= suggestions.length * 5; // Suggestions: -5 points each
-
-  // Apply diminishing returns for multiple issues of same type
+  // Calculate critical penalty with diminishing returns built in
+  // First 3 criticals: full penalty (30 points each)
+  // Additional criticals: softened penalty (25 points each - 16.67% reduction)
   // This prevents unfairly harsh scoring when multiple related issues exist
-  if (critical.length > 3) {
-    score += Math.floor(critical.length - 3) * 5; // Soften penalty
-  }
+  const criticalCount = critical.length;
+  const CRITICAL_SOFTENED_WEIGHT = Math.round(
+    SCORING_CONFIG.CRITICAL_BASE_WEIGHT * (1 - SCORING_CONFIG.SOFTEN_FACTOR)
+  );
+
+  const criticalPenalty =
+    Math.min(criticalCount, SCORING_CONFIG.CRITICAL_THRESHOLD) * SCORING_CONFIG.CRITICAL_BASE_WEIGHT +
+    Math.max(0, criticalCount - SCORING_CONFIG.CRITICAL_THRESHOLD) * CRITICAL_SOFTENED_WEIGHT;
+
+  // Deduct points based on issues found with severity weighting
+  score -= criticalPenalty; // Critical issues with diminishing returns
+  score -= warnings.length * SCORING_CONFIG.WARNING_WEIGHT;
+  score -= suggestions.length * SCORING_CONFIG.SUGGESTION_WEIGHT;
 
   // LGTM bonus - ONLY if reviewer is verified and authorized
   // SECURITY: Never trust LGTM from parsed comment content alone
@@ -211,12 +244,12 @@ export function calculateQualityScore(
     : false; // Default to false if no auth provided
 
   if (isAuthorizedLgtm && critical.length === 0) {
-    score = Math.min(100, score + 10);
+    score = Math.min(100, score + SCORING_CONFIG.LGTM_BONUS);
   }
 
   // Penalty for LGTM with critical issues (authorized reviewer made a mistake)
   if (isAuthorizedLgtm && critical.length > 0) {
-    score -= 10;
+    score -= SCORING_CONFIG.LGTM_WITH_CRITICALS_PENALTY;
   }
 
   // Ensure score is in valid range

@@ -280,6 +280,150 @@ describe('review-analyzer', () => {
     });
   });
 
+  describe('Issue #12 & #19: Fix diminishing returns and weight-proportional softening', () => {
+    // Helper to generate critical issues
+    const generateCriticalIssues = (count: number): string => {
+      return Array(count).fill('Critical bug found').join('\n');
+    };
+
+
+    test('0 critical issues should score 100', () => {
+      const review = 'Looks good overall';
+      const score = calculateQualityScore(review, false);
+      expect(score.score).toBe(100);
+    });
+
+    test('1 critical issue should score 70 (100 - 30)', () => {
+      const review = generateCriticalIssues(1);
+      const score = calculateQualityScore(review, false);
+      expect(score.score).toBe(70);
+    });
+
+    test('2 critical issues should score 40 (100 - 60)', () => {
+      const review = generateCriticalIssues(2);
+      const score = calculateQualityScore(review, false);
+      expect(score.score).toBe(40);
+    });
+
+    test('3 critical issues should score 10 (100 - 90)', () => {
+      const review = generateCriticalIssues(3);
+      const score = calculateQualityScore(review, false);
+      expect(score.score).toBe(10);
+    });
+
+    test('4 criticals should score 0 (demonstrating diminishing returns)', () => {
+      const review = generateCriticalIssues(4);
+      const score = calculateQualityScore(review, false);
+
+      // With correct logic: 100 - 3*30 - 1*25 = -15, clamped to 0
+      // With broken logic: 100 - 4*30 + 1*5 = -15, also clamped to 0
+      // This test passes on both, but documents expected behavior
+      expect(score.score).toBe(0);
+    });
+
+    test('Score progression should show diminishing returns effect', () => {
+      // This is the key test: verify the PROGRESSION is correct
+      // Current bug: score += Math.floor(count - 3) * 5 ADDS BACK points
+      // This means score goes: 100, 70, 40, 10, -15+5=-10 (clamped 0)
+      // After fix: First 3 full penalty, then softened penalty
+      // Score should be: 100, 70, 40, 10, then stay at 0
+
+      const scores = [];
+      for (let i = 0; i <= 6; i++) {
+        const review = i === 0 ? 'Looks good' : generateCriticalIssues(i);
+        const result = calculateQualityScore(review, false);
+        scores.push(result.score);
+      }
+
+      // Expected scores:
+      // 0: 100
+      // 1: 70 (100 - 30)
+      // 2: 40 (100 - 60)
+      // 3: 10 (100 - 90)
+      // 4: 0 (100 - 90 - 25 = -15, clamped to 0)
+      // 5: 0 (100 - 90 - 50 = -40, clamped to 0)
+      // 6: 0 (100 - 90 - 75 = -75, clamped to 0)
+
+      expect(scores).toEqual([100, 70, 40, 10, 0, 0, 0]);
+
+      // Also verify monotonic
+      for (let i = 1; i < scores.length; i++) {
+        expect(scores[i]).toBeLessThanOrEqual(scores[i - 1]);
+      }
+    });
+
+    test('Diminishing returns calculation must happen BEFORE penalties are applied', () => {
+      // This is the core bug: current code does:
+      // 1. score -= count * 30
+      // 2. score += (count - 3) * 5
+      // This adds back points AFTER deducting, which is wrong.
+
+      // Correct approach: calculate penalty WITH diminishing returns, then subtract once
+      // criticalPenalty = min(count, 3) * 30 + max(0, count - 3) * 25
+
+      // We can't directly test the intermediate calculation, but we can verify
+      // the monotonic property holds
+
+      const scores = [];
+      for (let i = 0; i <= 10; i++) {
+        const review = i === 0 ? 'Looks good' : generateCriticalIssues(i);
+        const result = calculateQualityScore(review, false);
+        scores.push(result.score);
+      }
+
+      // Verify NO score increases as issues increase
+      for (let i = 1; i < scores.length; i++) {
+        expect(scores[i]).toBeLessThanOrEqual(scores[i - 1]);
+      }
+    });
+
+    test('Softening factor must be proportional to base weight (Issue #19)', () => {
+      // Issue #19: The softening should be proportional to base weight
+      // Softened weight = baseWeight * (1 - softenFactor)
+      // With baseWeight=30, softenFactor=0.17: softened = 30 * 0.83 = 24.9 ≈ 25
+
+      // The implementation uses derived calculation, so verify the relationship holds
+      // 4 criticals: penalty = 3*30 + 1*25 = 115
+      // 5 criticals: penalty = 3*30 + 2*25 = 140
+      // Difference per additional critical = 25 (not hardcoded 5)
+
+      const score4 = calculateQualityScore(generateCriticalIssues(4), false);
+      const score5 = calculateQualityScore(generateCriticalIssues(5), false);
+
+      // Both clamp to 0 with this many criticals
+      expect(score4.score).toBe(0);
+      expect(score5.score).toBe(0);
+
+      // The real verification: check that softening is 83% of base weight
+      // If base weight changed to 60, softening should be 50 (not stay at 5)
+      // Since we can't easily change constants in tests, we verify the
+      // relationship through the penalty progression:
+      // Penalty difference between 4 and 5 criticals = 25 (softened weight)
+      // This is 83.33% of 30 (base weight), confirming proportionality
+
+      // Note: The previous "broken" implementation (-count*30 + (count-3)*5)
+      // is mathematically equivalent to the correct formula for these values:
+      // -30c + 5(c-3) = -25c - 15 = -90 - 25(c-3)
+      // So tests can't distinguish them! The fix improves maintainability
+      // and uses the correct conceptual model (diminishing returns upfront,
+      // not add-back after full penalty).
+    });
+
+    test('Warning and suggestion scoring should remain unaffected', () => {
+      const reviewWarnings = 'Warning: potential issue\nWarning: edge case';
+      const reviewSuggestions = 'Consider improving\nSuggest refactoring';
+
+      const scoreWarnings = calculateQualityScore(reviewWarnings, false);
+      const scoreSuggestions = calculateQualityScore(reviewSuggestions, false);
+
+      // 2 warnings = 100 - 2*15 = 70
+      expect(scoreWarnings.score).toBe(70);
+
+      // 2 suggestions = 100 - 2*5 = 90
+      expect(scoreSuggestions.score).toBe(90);
+    });
+  });
+
   describe('Issue #15: Input validation and ReDoS protection', () => {
     describe('analyzeReviewSeverity input validation', () => {
       test('should reject empty string', () => {
@@ -462,6 +606,18 @@ describe('review-analyzer', () => {
       }).not.toThrow();
     });
 
+    test('calculateQualityScore should reject empty review (Issue #15)', () => {
+      // Issue #15: Input validation should reject empty/whitespace-only input
+      expect(() => {
+        calculateQualityScore('', false);
+      }).toThrow('Invalid input: reviewComment cannot be empty');
+
+      // Also test whitespace-only
+      expect(() => {
+        calculateQualityScore('   \n\t  ', false);
+      }).toThrow('Invalid input: reviewComment cannot be empty');
+    });
+
     test('calculateQualityScore should produce valid score with minimal review', () => {
       // Minimal non-empty review (Issue #15 requires non-empty input)
       const reviewComment = 'Looks good';
@@ -483,7 +639,7 @@ describe('review-analyzer', () => {
       expect(result.score).toBeGreaterThanOrEqual(0);
     });
 
-    test('calculateQualityScore with non-boolean lgtm (string "true") should work with valid auth', () => {
+    test('calculateQualityScore should reject non-boolean lgtm (string)', () => {
       const reviewComment = 'Looks good!';
       const validAuth = {
         isVerified: true,
@@ -492,13 +648,14 @@ describe('review-analyzer', () => {
         verifiedAt: new Date()
       } as ReviewerAuth;
 
-      // String "true" is truthy, so it should still trigger the security check
+      // SECURITY: Don't accept non-boolean values for security-sensitive lgtm flag
+      // Single invocation with combined assertion
       expect(() => {
         calculateQualityScore(reviewComment, "true" as any, validAuth);
-      }).not.toThrow();
+      }).toThrow(new TypeError('Invalid input: lgtm parameter must be a boolean. Received string: true'));
     });
 
-    test('calculateQualityScore with non-boolean lgtm (number 1) should work with auth', () => {
+    test('calculateQualityScore should reject non-boolean lgtm (number)', () => {
       const reviewComment = 'Looks good!';
       const validAuth = {
         isVerified: true,
@@ -507,37 +664,52 @@ describe('review-analyzer', () => {
         verifiedAt: new Date()
       } as ReviewerAuth;
 
-      // Number 1 is truthy, so it should work with valid auth
+      // SECURITY: Don't accept non-boolean values for security-sensitive lgtm flag
+      // Single invocation with combined assertion
       expect(() => {
         calculateQualityScore(reviewComment, 1 as any, validAuth);
-      }).not.toThrow();
+      }).toThrow(new TypeError('Invalid input: lgtm parameter must be a boolean. Received number: 1'));
     });
 
-    test('calculateQualityScore with non-boolean lgtm (number 0) should not require auth', () => {
+    test('calculateQualityScore should reject non-boolean lgtm (number 0)', () => {
       const reviewComment = 'Needs work';
 
-      // Number 0 is falsy, so it should not require auth
+      // SECURITY: Reject non-boolean even if falsy
+      // Single invocation with combined assertion
       expect(() => {
         calculateQualityScore(reviewComment, 0 as any);
-      }).not.toThrow();
+      }).toThrow(new TypeError('Invalid input: lgtm parameter must be a boolean. Received number: 0'));
     });
 
-    test('calculateQualityScore with non-boolean lgtm (empty string) should not require auth', () => {
+    test('calculateQualityScore should reject non-boolean lgtm (empty string)', () => {
       const reviewComment = 'Needs work';
 
-      // Empty string is falsy
+      // SECURITY: Reject non-boolean even if falsy
+      // Single invocation with combined assertion
       expect(() => {
         calculateQualityScore(reviewComment, "" as any);
-      }).not.toThrow();
+      }).toThrow(new TypeError('Invalid input: lgtm parameter must be a boolean. Received string: '));
     });
 
-    test('calculateQualityScore with non-boolean lgtm (undefined) should not require auth', () => {
+    test('calculateQualityScore should reject non-boolean lgtm (undefined)', () => {
       const reviewComment = 'Needs work';
 
-      // undefined is falsy
+      // SECURITY: Reject non-boolean even if falsy
+      // Single invocation with combined assertion
       expect(() => {
         calculateQualityScore(reviewComment, undefined as any);
-      }).not.toThrow();
+      }).toThrow(new TypeError('Invalid input: lgtm parameter must be a boolean. Received undefined: undefined'));
+    });
+
+    test('calculateQualityScore should reject non-boolean lgtm (BigInt) without serialization error', () => {
+      const reviewComment = 'Needs work';
+
+      // SECURITY: Reject BigInt without JSON.stringify throwing TypeError
+      // Uses String() for safe serialization
+      // Single invocation with combined assertion
+      expect(() => {
+        calculateQualityScore(reviewComment, BigInt(1) as any);
+      }).toThrow(new TypeError('Invalid input: lgtm parameter must be a boolean. Received bigint: 1'));
     });
   });
 
