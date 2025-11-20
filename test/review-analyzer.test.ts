@@ -606,6 +606,18 @@ describe('review-analyzer', () => {
       }).not.toThrow();
     });
 
+    test('calculateQualityScore should reject empty review (Issue #15)', () => {
+      // Issue #15: Input validation should reject empty/whitespace-only input
+      expect(() => {
+        calculateQualityScore('', false);
+      }).toThrow('Invalid input: reviewComment cannot be empty');
+
+      // Also test whitespace-only
+      expect(() => {
+        calculateQualityScore('   \n\t  ', false);
+      }).toThrow('Invalid input: reviewComment cannot be empty');
+    });
+
     test('calculateQualityScore should produce valid score with minimal review', () => {
       // Minimal non-empty review (Issue #15 requires non-empty input)
       const reviewComment = 'Looks good';
@@ -627,7 +639,7 @@ describe('review-analyzer', () => {
       expect(result.score).toBeGreaterThanOrEqual(0);
     });
 
-    test('calculateQualityScore with non-boolean lgtm (string "true") should work with valid auth', () => {
+    test('calculateQualityScore with non-boolean lgtm (string "true") coerces to truthy', () => {
       const reviewComment = 'Looks good!';
       const validAuth = {
         isVerified: true,
@@ -636,13 +648,14 @@ describe('review-analyzer', () => {
         verifiedAt: new Date()
       } as ReviewerAuth;
 
-      // String "true" is truthy, so it should still trigger the security check
+      // String "true" is truthy, coerces to true via JavaScript truthiness
+      // Implementation doesn't explicitly accept strings, just uses boolean context
       expect(() => {
         calculateQualityScore(reviewComment, "true" as any, validAuth);
       }).not.toThrow();
     });
 
-    test('calculateQualityScore with non-boolean lgtm (number 1) should work with auth', () => {
+    test('calculateQualityScore with non-boolean lgtm (number 1) coerces to truthy', () => {
       const reviewComment = 'Looks good!';
       const validAuth = {
         isVerified: true,
@@ -651,34 +664,38 @@ describe('review-analyzer', () => {
         verifiedAt: new Date()
       } as ReviewerAuth;
 
-      // Number 1 is truthy, so it should work with valid auth
+      // Number 1 is truthy, coerces to true via JavaScript truthiness
+      // Implementation doesn't explicitly accept numbers, just uses boolean context
       expect(() => {
         calculateQualityScore(reviewComment, 1 as any, validAuth);
       }).not.toThrow();
     });
 
-    test('calculateQualityScore with non-boolean lgtm (number 0) should not require auth', () => {
+    test('calculateQualityScore with non-boolean lgtm (number 0) coerces to falsy', () => {
       const reviewComment = 'Needs work';
 
-      // Number 0 is falsy, so it should not require auth
+      // Number 0 is falsy, coerces to false via JavaScript truthiness
+      // Doesn't require auth because falsy values don't trigger LGTM path
       expect(() => {
         calculateQualityScore(reviewComment, 0 as any);
       }).not.toThrow();
     });
 
-    test('calculateQualityScore with non-boolean lgtm (empty string) should not require auth', () => {
+    test('calculateQualityScore with non-boolean lgtm (empty string) coerces to falsy', () => {
       const reviewComment = 'Needs work';
 
-      // Empty string is falsy
+      // Empty string is falsy, coerces to false via JavaScript truthiness
+      // Doesn't require auth because falsy values don't trigger LGTM path
       expect(() => {
         calculateQualityScore(reviewComment, "" as any);
       }).not.toThrow();
     });
 
-    test('calculateQualityScore with non-boolean lgtm (undefined) should not require auth', () => {
+    test('calculateQualityScore with non-boolean lgtm (undefined) coerces to falsy', () => {
       const reviewComment = 'Needs work';
 
-      // undefined is falsy
+      // undefined is falsy, coerces to false via JavaScript truthiness
+      // Doesn't require auth because falsy values don't trigger LGTM path
       expect(() => {
         calculateQualityScore(reviewComment, undefined as any);
       }).not.toThrow();
