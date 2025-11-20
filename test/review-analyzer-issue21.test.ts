@@ -27,11 +27,11 @@ describe('Issue #21: Defensive defaults for undefined severity arrays', () => {
 
     // Should not throw - defensive defaults should handle this
     // Without defensive defaults, this would throw: "Cannot read property 'length' of undefined"
-    expect(() => {
-      const result = reviewAnalyzerModule.calculateQualityScore(reviewComment, false);
-      expect(result.score).toBeGreaterThanOrEqual(0);
-      expect(result.score).toBeLessThanOrEqual(100);
-    }).not.toThrow();
+    expect(() => reviewAnalyzerModule.calculateQualityScore(reviewComment, false)).not.toThrow();
+
+    const result = reviewAnalyzerModule.calculateQualityScore(reviewComment, false);
+    expect(result.score).toBeGreaterThanOrEqual(0);
+    expect(result.score).toBeLessThanOrEqual(100);
   });
 
   test('calculateQualityScore handles null warnings array', () => {
@@ -44,11 +44,11 @@ describe('Issue #21: Defensive defaults for undefined severity arrays', () => {
 
     const reviewComment = 'Test comment';
 
-    expect(() => {
-      const result = reviewAnalyzerModule.calculateQualityScore(reviewComment, false);
-      expect(result.score).toBeGreaterThanOrEqual(0);
-      expect(result.score).toBeLessThanOrEqual(100);
-    }).not.toThrow();
+    expect(() => reviewAnalyzerModule.calculateQualityScore(reviewComment, false)).not.toThrow();
+
+    const result = reviewAnalyzerModule.calculateQualityScore(reviewComment, false);
+    expect(result.score).toBeGreaterThanOrEqual(0);
+    expect(result.score).toBeLessThanOrEqual(100);
   });
 
   test('calculateQualityScore handles undefined suggestions array', () => {
@@ -61,11 +61,11 @@ describe('Issue #21: Defensive defaults for undefined severity arrays', () => {
 
     const reviewComment = 'Test comment';
 
-    expect(() => {
-      const result = reviewAnalyzerModule.calculateQualityScore(reviewComment, false);
-      expect(result.score).toBeGreaterThanOrEqual(0);
-      expect(result.score).toBeLessThanOrEqual(100);
-    }).not.toThrow();
+    expect(() => reviewAnalyzerModule.calculateQualityScore(reviewComment, false)).not.toThrow();
+
+    const result = reviewAnalyzerModule.calculateQualityScore(reviewComment, false);
+    expect(result.score).toBeGreaterThanOrEqual(0);
+    expect(result.score).toBeLessThanOrEqual(100);
   });
 
   test('calculateQualityScore handles all arrays as null', () => {
@@ -78,11 +78,11 @@ describe('Issue #21: Defensive defaults for undefined severity arrays', () => {
 
     const reviewComment = 'Test comment';
 
-    expect(() => {
-      const result = reviewAnalyzerModule.calculateQualityScore(reviewComment, false);
-      expect(result.score).toBe(100); // No issues = perfect score
-      expect(result.category).toBe('excellent');
-    }).not.toThrow();
+    expect(() => reviewAnalyzerModule.calculateQualityScore(reviewComment, false)).not.toThrow();
+
+    const result = reviewAnalyzerModule.calculateQualityScore(reviewComment, false);
+    expect(result.score).toBe(100); // No issues = perfect score
+    expect(result.category).toBe('excellent');
   });
 
   test('calculateQualityScore handles all arrays as undefined', () => {
@@ -95,11 +95,11 @@ describe('Issue #21: Defensive defaults for undefined severity arrays', () => {
 
     const reviewComment = 'Test comment';
 
-    expect(() => {
-      const result = reviewAnalyzerModule.calculateQualityScore(reviewComment, false);
-      expect(result.score).toBe(100);
-      expect(result.category).toBe('excellent');
-    }).not.toThrow();
+    expect(() => reviewAnalyzerModule.calculateQualityScore(reviewComment, false)).not.toThrow();
+
+    const result = reviewAnalyzerModule.calculateQualityScore(reviewComment, false);
+    expect(result.score).toBe(100);
+    expect(result.category).toBe('excellent');
   });
 
   test('calculateQualityScore handles mixed undefined/null arrays with LGTM', () => {
@@ -118,11 +118,11 @@ describe('Issue #21: Defensive defaults for undefined severity arrays', () => {
       verifiedAt: new Date()
     };
 
-    expect(() => {
-      const result = reviewAnalyzerModule.calculateQualityScore(reviewComment, true, validAuth);
-      // Should still work and apply LGTM bonus
-      expect(result.score).toBe(100);
-    }).not.toThrow();
+    expect(() => reviewAnalyzerModule.calculateQualityScore(reviewComment, true, validAuth)).not.toThrow();
+
+    const result = reviewAnalyzerModule.calculateQualityScore(reviewComment, true, validAuth);
+    // Should still work and apply LGTM bonus
+    expect(result.score).toBe(100);
   });
 
   test('calculateQualityScore breakdown handles undefined arrays in filter operations', () => {
@@ -135,14 +135,14 @@ describe('Issue #21: Defensive defaults for undefined severity arrays', () => {
 
     const reviewComment = 'Test comment';
 
-    expect(() => {
-      const result = reviewAnalyzerModule.calculateQualityScore(reviewComment, false);
-      // Breakdown should also not crash
-      expect(result.breakdown).toBeDefined();
-      expect(result.breakdown.security).toBeGreaterThanOrEqual(0);
-      expect(result.breakdown.maintainability).toBeGreaterThanOrEqual(0);
-      expect(result.breakdown.performance).toBeGreaterThanOrEqual(0);
-      expect(result.breakdown.testability).toBeGreaterThanOrEqual(0);
-    }).not.toThrow();
+    expect(() => reviewAnalyzerModule.calculateQualityScore(reviewComment, false)).not.toThrow();
+
+    const result = reviewAnalyzerModule.calculateQualityScore(reviewComment, false);
+    // Breakdown should also not crash
+    expect(result.breakdown).toBeDefined();
+    expect(result.breakdown.security).toBeGreaterThanOrEqual(0);
+    expect(result.breakdown.maintainability).toBeGreaterThanOrEqual(0);
+    expect(result.breakdown.performance).toBeGreaterThanOrEqual(0);
+    expect(result.breakdown.testability).toBeGreaterThanOrEqual(0);
   });
 });
