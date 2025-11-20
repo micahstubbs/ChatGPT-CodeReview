@@ -169,5 +169,62 @@ describe('Issue #23: Edge case and boundary tests', () => {
       const result2 = calculateQualityScore(review, false);
       expect(result1.score).toBe(result2.score);
     });
+
+    test('score is independent of issue ordering', () => {
+      const review1 = 'Critical bug\nWarning: issue\nConsider this';
+      const review2 = 'Consider this\nCritical bug\nWarning: issue';
+      const review3 = 'Warning: issue\nConsider this\nCritical bug';
+
+      const result1 = calculateQualityScore(review1, false);
+      const result2 = calculateQualityScore(review2, false);
+      const result3 = calculateQualityScore(review3, false);
+
+      expect(result1.score).toBe(result2.score);
+      expect(result2.score).toBe(result3.score);
+    });
+  });
+
+  describe('Property-based monotonicity', () => {
+    test('score monotonically decreases across all issue types', () => {
+      // Test that adding issues of any type never increases score
+      for (let c = 0; c < 4; c++) {
+        for (let w = 0; w < 4; w++) {
+          for (let s = 0; s < 4; s++) {
+            const current = [
+              ...Array(c).fill(0).map((_, i) => `Critical bug ${i}`),
+              ...Array(w).fill(0).map((_, i) => `Warning: issue ${i}`),
+              ...Array(s).fill(0).map((_, i) => `Consider ${i}`)
+            ].join('\n') || 'Empty';
+
+            const moreCriticals = [
+              ...Array(c + 1).fill(0).map((_, i) => `Critical bug ${i}`),
+              ...Array(w).fill(0).map((_, i) => `Warning: issue ${i}`),
+              ...Array(s).fill(0).map((_, i) => `Consider ${i}`)
+            ].join('\n');
+
+            const moreWarnings = [
+              ...Array(c).fill(0).map((_, i) => `Critical bug ${i}`),
+              ...Array(w + 1).fill(0).map((_, i) => `Warning: issue ${i}`),
+              ...Array(s).fill(0).map((_, i) => `Consider ${i}`)
+            ].join('\n');
+
+            const moreSuggestions = [
+              ...Array(c).fill(0).map((_, i) => `Critical bug ${i}`),
+              ...Array(w).fill(0).map((_, i) => `Warning: issue ${i}`),
+              ...Array(s + 1).fill(0).map((_, i) => `Consider ${i}`)
+            ].join('\n');
+
+            const currentScore = calculateQualityScore(current, false).score;
+            const critScore = calculateQualityScore(moreCriticals, false).score;
+            const warnScore = calculateQualityScore(moreWarnings, false).score;
+            const suggScore = calculateQualityScore(moreSuggestions, false).score;
+
+            expect(critScore).toBeLessThanOrEqual(currentScore);
+            expect(warnScore).toBeLessThanOrEqual(currentScore);
+            expect(suggScore).toBeLessThanOrEqual(currentScore);
+          }
+        }
+      }
+    });
   });
 });
