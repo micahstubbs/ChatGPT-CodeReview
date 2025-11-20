@@ -27,9 +27,11 @@ describe('Issue #21: Defensive defaults for undefined severity arrays', () => {
 
     // Should not throw - defensive defaults should handle this
     // Without defensive defaults, this would throw: "Cannot read property 'length' of undefined"
-    expect(() => reviewAnalyzerModule.calculateQualityScore(reviewComment, false)).not.toThrow();
+    let result: any;
+    expect(() => {
+      result = reviewAnalyzerModule.calculateQualityScore(reviewComment, false);
+    }).not.toThrow();
 
-    const result = reviewAnalyzerModule.calculateQualityScore(reviewComment, false);
     expect(result.score).toBeGreaterThanOrEqual(0);
     expect(result.score).toBeLessThanOrEqual(100);
   });
@@ -44,9 +46,11 @@ describe('Issue #21: Defensive defaults for undefined severity arrays', () => {
 
     const reviewComment = 'Test comment';
 
-    expect(() => reviewAnalyzerModule.calculateQualityScore(reviewComment, false)).not.toThrow();
+    let result: any;
+    expect(() => {
+      result = reviewAnalyzerModule.calculateQualityScore(reviewComment, false);
+    }).not.toThrow();
 
-    const result = reviewAnalyzerModule.calculateQualityScore(reviewComment, false);
     expect(result.score).toBeGreaterThanOrEqual(0);
     expect(result.score).toBeLessThanOrEqual(100);
   });
@@ -61,9 +65,11 @@ describe('Issue #21: Defensive defaults for undefined severity arrays', () => {
 
     const reviewComment = 'Test comment';
 
-    expect(() => reviewAnalyzerModule.calculateQualityScore(reviewComment, false)).not.toThrow();
+    let result: any;
+    expect(() => {
+      result = reviewAnalyzerModule.calculateQualityScore(reviewComment, false);
+    }).not.toThrow();
 
-    const result = reviewAnalyzerModule.calculateQualityScore(reviewComment, false);
     expect(result.score).toBeGreaterThanOrEqual(0);
     expect(result.score).toBeLessThanOrEqual(100);
   });
@@ -78,9 +84,11 @@ describe('Issue #21: Defensive defaults for undefined severity arrays', () => {
 
     const reviewComment = 'Test comment';
 
-    expect(() => reviewAnalyzerModule.calculateQualityScore(reviewComment, false)).not.toThrow();
+    let result: any;
+    expect(() => {
+      result = reviewAnalyzerModule.calculateQualityScore(reviewComment, false);
+    }).not.toThrow();
 
-    const result = reviewAnalyzerModule.calculateQualityScore(reviewComment, false);
     expect(result.score).toBe(100); // No issues = perfect score
     expect(result.category).toBe('excellent');
   });
@@ -95,9 +103,11 @@ describe('Issue #21: Defensive defaults for undefined severity arrays', () => {
 
     const reviewComment = 'Test comment';
 
-    expect(() => reviewAnalyzerModule.calculateQualityScore(reviewComment, false)).not.toThrow();
+    let result: any;
+    expect(() => {
+      result = reviewAnalyzerModule.calculateQualityScore(reviewComment, false);
+    }).not.toThrow();
 
-    const result = reviewAnalyzerModule.calculateQualityScore(reviewComment, false);
     expect(result.score).toBe(100);
     expect(result.category).toBe('excellent');
   });
@@ -118,9 +128,11 @@ describe('Issue #21: Defensive defaults for undefined severity arrays', () => {
       verifiedAt: new Date()
     };
 
-    expect(() => reviewAnalyzerModule.calculateQualityScore(reviewComment, true, validAuth)).not.toThrow();
+    let result: any;
+    expect(() => {
+      result = reviewAnalyzerModule.calculateQualityScore(reviewComment, true, validAuth);
+    }).not.toThrow();
 
-    const result = reviewAnalyzerModule.calculateQualityScore(reviewComment, true, validAuth);
     // Should still work and apply LGTM bonus
     expect(result.score).toBe(100);
   });
@@ -135,9 +147,11 @@ describe('Issue #21: Defensive defaults for undefined severity arrays', () => {
 
     const reviewComment = 'Test comment';
 
-    expect(() => reviewAnalyzerModule.calculateQualityScore(reviewComment, false)).not.toThrow();
+    let result: any;
+    expect(() => {
+      result = reviewAnalyzerModule.calculateQualityScore(reviewComment, false);
+    }).not.toThrow();
 
-    const result = reviewAnalyzerModule.calculateQualityScore(reviewComment, false);
     // Breakdown should also not crash
     expect(result.breakdown).toBeDefined();
     expect(result.breakdown.security).toBeGreaterThanOrEqual(0);
