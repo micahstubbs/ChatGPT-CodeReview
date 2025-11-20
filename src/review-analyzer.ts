@@ -269,7 +269,7 @@ export async function verifyReviewerAuthorization(
   try {
     // Query GitHub API to verify reviewer permissions
     // GET /repos/{owner}/{repo}/collaborators/{username}/permission
-    const response = await fetch(
+    const response = await globalThis.fetch(
       `https://api.github.com/repos/${repoOwner}/${repoName}/collaborators/${githubLogin}/permission`,
       {
         method: 'GET',

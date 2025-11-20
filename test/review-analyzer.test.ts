@@ -12,6 +12,7 @@ import {
 // Mock global fetch
 const mockFetch = jest.fn() as jest.MockedFunction<typeof fetch>;
 global.fetch = mockFetch as any;
+globalThis.fetch = mockFetch as any;
 
 describe('review-analyzer', () => {
   beforeEach(() => {
