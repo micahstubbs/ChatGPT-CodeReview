@@ -1,0 +1,33 @@
+# Build outputs
+dist/
+action/
+lambda/
+lib/
+
+# Dependencies
+node_modules/
+
+# Lockfiles
+yarn.lock
+package-lock.json
+
+# Coverage
+coverage/
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.*
+
+# Git
+.git/
+
+# Archive
+archive/
+
+# Example files with syntax issues
+examples/gpt-5.1-codex-mini-workflow.yml
+examples/gpt-5.1-codex-workflow.yml
+serverless.yml

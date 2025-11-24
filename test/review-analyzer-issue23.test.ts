@@ -7,7 +7,10 @@ import { calculateQualityScore, ReviewerAuth } from '../src/review-analyzer';
 describe('Issue #23: Edge case and boundary tests', () => {
   describe('Critical softening boundaries', () => {
     const generateCriticals = (n: number) =>
-      Array(n).fill(0).map((_, i) => `Critical bug ${i + 1}`).join('\n');
+      Array(n)
+        .fill(0)
+        .map((_, i) => `Critical bug ${i + 1}`)
+        .join('\n');
 
     test('0 criticals: score = 100', () => {
       expect(calculateQualityScore('Looks good', false).score).toBe(100);
@@ -34,8 +37,8 @@ describe('Issue #23: Edge case and boundary tests', () => {
     });
 
     test('large critical counts remain monotonic', () => {
-      const scores = [1, 5, 10, 15, 20].map(n =>
-        calculateQualityScore(generateCriticals(n), false).score
+      const scores = [1, 5, 10, 15, 20].map(
+        (n) => calculateQualityScore(generateCriticals(n), false).score
       );
 
       // Verify scores decrease (or stay at 0)
@@ -58,7 +61,7 @@ describe('Issue #23: Edge case and boundary tests', () => {
       isVerified: true,
       login: 'reviewer',
       hasWriteAccess: true,
-      verifiedAt: new Date()
+      verifiedAt: new Date(),
     };
 
     test('LGTM with 0 criticals adds +10 bonus', () => {
@@ -85,8 +88,10 @@ describe('Issue #23: Edge case and boundary tests', () => {
     });
 
     test('LGTM penalties respect score floor of 0', () => {
-      const manyCriticals = Array(10).fill(0).map((_, i) =>
-        `Critical bug ${i}`).join('\n');
+      const manyCriticals = Array(10)
+        .fill(0)
+        .map((_, i) => `Critical bug ${i}`)
+        .join('\n');
       const result = calculateQualityScore(manyCriticals, true, validAuth);
 
       expect(result.score).toBeGreaterThanOrEqual(0);
@@ -104,8 +109,10 @@ describe('Issue #23: Edge case and boundary tests', () => {
   describe('Cross-category interactions', () => {
     test('many suggestions can drive score very low', () => {
       // 50 suggestions * 5 points = 250 points penalty
-      const manySuggestions = Array(50).fill(0).map((_, i) =>
-        `Consider improvement ${i}`).join('\n');
+      const manySuggestions = Array(50)
+        .fill(0)
+        .map((_, i) => `Consider improvement ${i}`)
+        .join('\n');
       const result = calculateQualityScore(manySuggestions, false);
 
       // Should clamp to 0, not go negative
@@ -136,9 +143,15 @@ describe('Issue #23: Edge case and boundary tests', () => {
 
       for (const { critical, warnings, suggestions, expected } of testCases) {
         const review = [
-          ...Array(critical).fill(0).map((_, i) => `Critical bug ${i}`),
-          ...Array(warnings).fill(0).map((_, i) => `Warning: issue ${i}`),
-          ...Array(suggestions).fill(0).map((_, i) => `Consider ${i}`),
+          ...Array(critical)
+            .fill(0)
+            .map((_, i) => `Critical bug ${i}`),
+          ...Array(warnings)
+            .fill(0)
+            .map((_, i) => `Warning: issue ${i}`),
+          ...Array(suggestions)
+            .fill(0)
+            .map((_, i) => `Consider ${i}`),
         ].join('\n');
 
         const result = calculateQualityScore(review || 'Empty', false);
@@ -190,28 +203,53 @@ describe('Issue #23: Edge case and boundary tests', () => {
       for (let c = 0; c < 4; c++) {
         for (let w = 0; w < 4; w++) {
           for (let s = 0; s < 4; s++) {
-            const current = [
-              ...Array(c).fill(0).map((_, i) => `Critical bug ${i}`),
-              ...Array(w).fill(0).map((_, i) => `Warning: issue ${i}`),
-              ...Array(s).fill(0).map((_, i) => `Consider ${i}`)
-            ].join('\n') || 'Empty';
+            const current =
+              [
+                ...Array(c)
+                  .fill(0)
+                  .map((_, i) => `Critical bug ${i}`),
+                ...Array(w)
+                  .fill(0)
+                  .map((_, i) => `Warning: issue ${i}`),
+                ...Array(s)
+                  .fill(0)
+                  .map((_, i) => `Consider ${i}`),
+              ].join('\n') || 'Empty';
 
             const moreCriticals = [
-              ...Array(c + 1).fill(0).map((_, i) => `Critical bug ${i}`),
-              ...Array(w).fill(0).map((_, i) => `Warning: issue ${i}`),
-              ...Array(s).fill(0).map((_, i) => `Consider ${i}`)
+              ...Array(c + 1)
+                .fill(0)
+                .map((_, i) => `Critical bug ${i}`),
+              ...Array(w)
+                .fill(0)
+                .map((_, i) => `Warning: issue ${i}`),
+              ...Array(s)
+                .fill(0)
+                .map((_, i) => `Consider ${i}`),
             ].join('\n');
 
             const moreWarnings = [
-              ...Array(c).fill(0).map((_, i) => `Critical bug ${i}`),
-              ...Array(w + 1).fill(0).map((_, i) => `Warning: issue ${i}`),
-              ...Array(s).fill(0).map((_, i) => `Consider ${i}`)
+              ...Array(c)
+                .fill(0)
+                .map((_, i) => `Critical bug ${i}`),
+              ...Array(w + 1)
+                .fill(0)
+                .map((_, i) => `Warning: issue ${i}`),
+              ...Array(s)
+                .fill(0)
+                .map((_, i) => `Consider ${i}`),
             ].join('\n');
 
             const moreSuggestions = [
-              ...Array(c).fill(0).map((_, i) => `Critical bug ${i}`),
-              ...Array(w).fill(0).map((_, i) => `Warning: issue ${i}`),
-              ...Array(s + 1).fill(0).map((_, i) => `Consider ${i}`)
+              ...Array(c)
+                .fill(0)
+                .map((_, i) => `Critical bug ${i}`),
+              ...Array(w)
+                .fill(0)
+                .map((_, i) => `Warning: issue ${i}`),
+              ...Array(s + 1)
+                .fill(0)
+                .map((_, i) => `Consider ${i}`),
             ].join('\n');
 
             const currentScore = calculateQualityScore(current, false).score;

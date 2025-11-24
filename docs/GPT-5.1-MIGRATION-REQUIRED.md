@@ -22,7 +22,7 @@ const res = await this.openai.chat.completions.create({
   top_p: +(process.env.top_p || 0) || 1,
   max_tokens: process.env.max_tokens ? +process.env.max_tokens : undefined,
   response_format: {
-    type: "json_object"
+    type: 'json_object',
   },
 });
 ```
@@ -64,7 +64,7 @@ const res = await this.openai.chat.completions.create({
   model: 'gpt-5.1',
   temperature: 0.7,
   max_tokens: 10000,
-  response_format: { type: "json_object" }
+  response_format: { type: 'json_object' },
 });
 ```
 
@@ -74,39 +74,39 @@ const res = await this.openai.chat.completions.create({
 // src/chat.ts - REQUIRED FOR GPT-5.1
 const res = await this.openai.responses.create({
   model: 'gpt-5.1',
-  input: prompt,  // Note: 'input' instead of 'messages'
+  input: prompt, // Note: 'input' instead of 'messages'
   reasoning: {
-    effort: process.env.REASONING_EFFORT || 'medium'  // none, minimal, low, medium, high
+    effort: process.env.REASONING_EFFORT || 'medium', // none, minimal, low, medium, high
   },
   text: {
-    verbosity: process.env.VERBOSITY || 'medium'  // low, medium, high
+    verbosity: process.env.VERBOSITY || 'medium', // low, medium, high
   },
   // For structured outputs (replaces response_format)
   output_schema: {
-    type: "object",
+    type: 'object',
     properties: {
-      lgtm: { type: "boolean" },
-      review_comment: { type: "string" }
+      lgtm: { type: 'boolean' },
+      review_comment: { type: 'string' },
     },
-    required: ["lgtm", "review_comment"]
-  }
+    required: ['lgtm', 'review_comment'],
+  },
 });
 ```
 
 ## Key Differences
 
-| Feature | Chat Completions API | Responses API |
-|---------|---------------------|---------------|
-| Endpoint | `/v1/chat/completions` | `/v1/responses` |
-| Input format | `messages: [...]` | `input: "..."` |
-| Temperature | `temperature: 0.7` | Not supported |
-| Top-p | `top_p: 0.9` | Not supported |
-| Max tokens | `max_tokens: 10000` | Not supported |
-| Reasoning control | ❌ Not available | `reasoning: { effort: "medium" }` |
-| Verbosity | ❌ Not available | `text: { verbosity: "medium" }` |
-| JSON output | `response_format: { type: "json_object" }` | `output_schema: {...}` (structured) |
-| CoT passing | ❌ Not available | `previous_response_id: "..."` |
-| Multi-turn | Manual message history | Automatic with `previous_response_id` |
+| Feature           | Chat Completions API                       | Responses API                         |
+| ----------------- | ------------------------------------------ | ------------------------------------- |
+| Endpoint          | `/v1/chat/completions`                     | `/v1/responses`                       |
+| Input format      | `messages: [...]`                          | `input: "..."`                        |
+| Temperature       | `temperature: 0.7`                         | Not supported                         |
+| Top-p             | `top_p: 0.9`                               | Not supported                         |
+| Max tokens        | `max_tokens: 10000`                        | Not supported                         |
+| Reasoning control | ❌ Not available                           | `reasoning: { effort: "medium" }`     |
+| Verbosity         | ❌ Not available                           | `text: { verbosity: "medium" }`       |
+| JSON output       | `response_format: { type: "json_object" }` | `output_schema: {...}` (structured)   |
+| CoT passing       | ❌ Not available                           | `previous_response_id: "..."`         |
+| Multi-turn        | Manual message history                     | Automatic with `previous_response_id` |
 
 ## Recommended Implementation
 
@@ -121,10 +121,10 @@ export class Chat {
   // Detect if model requires Responses API
   private isReasoningModel(model: string): boolean {
     const reasoningModels = ['gpt-5.1', 'gpt-5.1-codex', 'gpt-5-pro'];
-    return reasoningModels.some(m => model.includes(m));
+    return reasoningModels.some((m) => model.includes(m));
   }
 
-  public async codeReview(patch: string): Promise<{ lgtm: boolean, review_comment: string }> {
+  public async codeReview(patch: string): Promise<{ lgtm: boolean; review_comment: string }> {
     const model = process.env.MODEL || 'gpt-4o-mini';
     const prompt = this.generatePrompt(patch);
 
@@ -140,40 +140,40 @@ export class Chat {
   private async codeReviewWithResponsesAPI(
     prompt: string,
     model: string
-  ): Promise<{ lgtm: boolean, review_comment: string }> {
+  ): Promise<{ lgtm: boolean; review_comment: string }> {
     const res = await this.openai.responses.create({
       model: model,
       input: prompt,
       reasoning: {
-        effort: process.env.REASONING_EFFORT || 'medium'
+        effort: process.env.REASONING_EFFORT || 'medium',
       },
       text: {
-        verbosity: 'medium'
+        verbosity: 'medium',
       },
       output_schema: {
-        type: "object",
+        type: 'object',
         properties: {
-          lgtm: { type: "boolean", description: "True if code looks good to merge" },
-          review_comment: { type: "string", description: "Detailed review comments in markdown" }
+          lgtm: { type: 'boolean', description: 'True if code looks good to merge' },
+          review_comment: { type: 'string', description: 'Detailed review comments in markdown' },
         },
-        required: ["lgtm", "review_comment"],
-        additionalProperties: false
-      }
+        required: ['lgtm', 'review_comment'],
+        additionalProperties: false,
+      },
     });
 
     // Extract structured output
     if (res.output && res.output.type === 'object') {
-      return res.output.value as { lgtm: boolean, review_comment: string };
+      return res.output.value as { lgtm: boolean; review_comment: string };
     }
 
     // Fallback
-    return { lgtm: false, review_comment: "Error parsing response" };
+    return { lgtm: false, review_comment: 'Error parsing response' };
   }
 
   private async codeReviewWithChatAPI(
     prompt: string,
     model: string
-  ): Promise<{ lgtm: boolean, review_comment: string }> {
+  ): Promise<{ lgtm: boolean; review_comment: string }> {
     // Existing implementation...
     const res = await this.openai.chat.completions.create({
       messages: [{ role: 'user', content: prompt }],
@@ -181,22 +181,22 @@ export class Chat {
       temperature: +(process.env.temperature || 0) || 1,
       top_p: +(process.env.top_p || 0) || 1,
       max_tokens: process.env.max_tokens ? +process.env.max_tokens : undefined,
-      response_format: { type: "json_object" }
+      response_format: { type: 'json_object' },
     });
 
     // Existing parsing logic...
     if (res.choices.length) {
       try {
-        return JSON.parse(res.choices[0].message.content || "");
+        return JSON.parse(res.choices[0].message.content || '');
       } catch (e) {
         return {
           lgtm: false,
-          review_comment: res.choices[0].message.content || ""
+          review_comment: res.choices[0].message.content || '',
         };
       }
     }
 
-    return { lgtm: true, review_comment: "" };
+    return { lgtm: true, review_comment: '' };
   }
 }
 ```
@@ -242,13 +242,13 @@ VERBOSITY=medium         # low, medium, high
 
 ### Reasoning Effort Levels
 
-| Level | Speed | Accuracy | Cost | Best For |
-|-------|-------|----------|------|----------|
-| `none` | Fastest | Lowest | Cheapest | Simple PRs, quick feedback |
-| `minimal` | Very Fast | Low | Very Cheap | Routine changes |
-| `low` | Fast | Moderate | Cheap | Standard PRs |
-| `medium` | Balanced | Good | Moderate | Most use cases (recommended) |
-| `high` | Slow | Highest | Expensive | Critical security reviews |
+| Level     | Speed     | Accuracy | Cost       | Best For                     |
+| --------- | --------- | -------- | ---------- | ---------------------------- |
+| `none`    | Fastest   | Lowest   | Cheapest   | Simple PRs, quick feedback   |
+| `minimal` | Very Fast | Low      | Very Cheap | Routine changes              |
+| `low`     | Fast      | Moderate | Cheap      | Standard PRs                 |
+| `medium`  | Balanced  | Good     | Moderate   | Most use cases (recommended) |
+| `high`    | Slow      | Highest  | Expensive  | Critical security reviews    |
 
 ## Migration Checklist
 
@@ -266,6 +266,7 @@ VERBOSITY=medium         # low, medium, high
 ## Testing
 
 ### Test Case 1: GPT-5.1 with Responses API
+
 ```yaml
 env:
   MODEL: gpt-5.1-codex
@@ -274,6 +275,7 @@ env:
 ```
 
 ### Test Case 2: GPT-4o with Chat Completions API
+
 ```yaml
 env:
   MODEL: gpt-4o
@@ -316,6 +318,7 @@ The dual API approach (Option 1) maintains full backward compatibility:
 ## Support
 
 If you encounter issues during migration:
+
 1. Check OpenAI SDK version (requires v5+)
 2. Verify API endpoint access (`/v1/responses`)
 3. Review output_schema format

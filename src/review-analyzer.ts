@@ -65,7 +65,7 @@ export interface ReviewMetrics {
 
 export interface CodeQualityScore {
   score: number; // 0-100
-  category: "excellent" | "good" | "needs-improvement" | "critical";
+  category: 'excellent' | 'good' | 'needs-improvement' | 'critical';
   breakdown: {
     security: number;
     maintainability: number;
@@ -143,14 +143,14 @@ export function analyzeReviewSeverity(reviewComment: string): {
   // Input validation - protect against DoS and ReDoS attacks
 
   // Check if input is a string
-  if (typeof reviewComment !== "string") {
-    throw new Error("Invalid input: reviewComment must be a string");
+  if (typeof reviewComment !== 'string') {
+    throw new Error('Invalid input: reviewComment must be a string');
   }
 
   // Check if input is empty or whitespace-only
   // Use regex \S to match all ECMAScript whitespace chars (including NBSP, form feed, etc.)
   if (!/\S/.test(reviewComment)) {
-    throw new Error("Invalid input: reviewComment cannot be empty");
+    throw new Error('Invalid input: reviewComment cannot be empty');
   }
 
   // Check maximum length (10000 characters) to prevent DoS
@@ -167,24 +167,20 @@ export function analyzeReviewSeverity(reviewComment: string): {
   const MAX_LINES = 1000;
   let lineCount = 0;
   for (let i = 0; i < reviewComment.length; i++) {
-    if (reviewComment[i] === "\n") {
+    if (reviewComment[i] === '\n') {
       lineCount++;
       // Early exit if exceeded (DoS protection)
       if (lineCount > MAX_LINES) {
-        throw new Error(
-          `Invalid input: reviewComment exceeds maximum of ${MAX_LINES} lines`
-        );
+        throw new Error(`Invalid input: reviewComment exceeds maximum of ${MAX_LINES} lines`);
       }
     }
   }
   // If string doesn't end with newline, add 1 for the last line
   // If it ends with newline, lineCount already represents number of lines
-  if (reviewComment[reviewComment.length - 1] !== "\n") {
+  if (reviewComment[reviewComment.length - 1] !== '\n') {
     lineCount++;
     if (lineCount > MAX_LINES) {
-      throw new Error(
-        `Invalid input: reviewComment exceeds maximum of ${MAX_LINES} lines`
-      );
+      throw new Error(`Invalid input: reviewComment exceeds maximum of ${MAX_LINES} lines`);
     }
   }
 
@@ -193,39 +189,39 @@ export function analyzeReviewSeverity(reviewComment: string): {
   const suggestions: string[] = [];
 
   // Split by lines and analyze each
-  const lines = reviewComment.split("\n").filter((l) => l.trim());
+  const lines = reviewComment.split('\n').filter((l) => l.trim());
 
   for (const line of lines) {
     const lowerLine = line.toLowerCase();
 
     // Critical issues - security, bugs, breaking changes
     if (
-      lowerLine.includes("security") ||
-      lowerLine.includes("vulnerability") ||
-      lowerLine.includes("sql injection") ||
-      lowerLine.includes("xss") ||
-      lowerLine.includes("critical bug") ||
-      lowerLine.includes("data loss")
+      lowerLine.includes('security') ||
+      lowerLine.includes('vulnerability') ||
+      lowerLine.includes('sql injection') ||
+      lowerLine.includes('xss') ||
+      lowerLine.includes('critical bug') ||
+      lowerLine.includes('data loss')
     ) {
       critical.push(line);
     }
     // Warnings - potential issues, code smells
     else if (
-      lowerLine.includes("warning") ||
-      lowerLine.includes("potential issue") ||
-      lowerLine.includes("might fail") ||
-      lowerLine.includes("edge case") ||
-      lowerLine.includes("race condition")
+      lowerLine.includes('warning') ||
+      lowerLine.includes('potential issue') ||
+      lowerLine.includes('might fail') ||
+      lowerLine.includes('edge case') ||
+      lowerLine.includes('race condition')
     ) {
       warnings.push(line);
     }
     // Suggestions - improvements, best practices
     else if (
-      lowerLine.includes("consider") ||
-      lowerLine.includes("suggest") ||
-      lowerLine.includes("recommend") ||
-      lowerLine.includes("could be") ||
-      lowerLine.includes("better to")
+      lowerLine.includes('consider') ||
+      lowerLine.includes('suggest') ||
+      lowerLine.includes('recommend') ||
+      lowerLine.includes('could be') ||
+      lowerLine.includes('better to')
     ) {
       suggestions.push(line);
     }
@@ -253,10 +249,7 @@ function computeCategoryPenalty(
   softenedWeight: number,
   threshold: number
 ): number {
-  return (
-    Math.min(count, threshold) * baseWeight +
-    Math.max(0, count - threshold) * softenedWeight
-  );
+  return Math.min(count, threshold) * baseWeight + Math.max(0, count - threshold) * softenedWeight;
 }
 
 /**
@@ -268,9 +261,7 @@ function computeLgtmAdjustment(
   isAuthorized: boolean
 ): number {
   if (!lgtm || !isAuthorized) return 0;
-  return hasCriticals
-    ? -SCORING_CONFIG.LGTM_WITH_CRITICALS_PENALTY
-    : SCORING_CONFIG.LGTM_BONUS;
+  return hasCriticals ? -SCORING_CONFIG.LGTM_WITH_CRITICALS_PENALTY : SCORING_CONFIG.LGTM_BONUS;
 }
 
 /**
@@ -283,11 +274,11 @@ function clampScore(score: number, min: number = 0, max: number = 100): number {
 /**
  * Categorizes score into quality levels
  */
-function categorizeScore(score: number): CodeQualityScore["category"] {
-  if (score >= 90) return "excellent";
-  if (score >= 70) return "good";
-  if (score >= 50) return "needs-improvement";
-  return "critical";
+function categorizeScore(score: number): CodeQualityScore['category'] {
+  if (score >= 90) return 'excellent';
+  if (score >= 70) return 'good';
+  if (score >= 50) return 'needs-improvement';
+  return 'critical';
 }
 
 /**
@@ -297,24 +288,20 @@ function computeBreakdown(
   critical: string[],
   warnings: string[],
   suggestions: string[]
-): CodeQualityScore["breakdown"] {
+): CodeQualityScore['breakdown'] {
   return {
     security: Math.max(
       0,
-      100 -
-        critical.filter((c) => c.toLowerCase().includes("security")).length * 40
+      100 - critical.filter((c) => c.toLowerCase().includes('security')).length * 40
     ),
     maintainability: Math.max(0, 100 - warnings.length * 10),
     performance: Math.max(
       0,
-      100 -
-        warnings.filter((w) => w.toLowerCase().includes("performance")).length *
-          20
+      100 - warnings.filter((w) => w.toLowerCase().includes('performance')).length * 20
     ),
     testability: Math.max(
       0,
-      100 -
-        suggestions.filter((s) => s.toLowerCase().includes("test")).length * 10
+      100 - suggestions.filter((s) => s.toLowerCase().includes('test')).length * 10
     ),
   };
 }
@@ -347,9 +334,9 @@ export function calculateQualityScore(
   _requiredApprovers: number = 1
 ): CodeQualityScore {
   // SECURITY: Validate lgtm parameter type before making security decisions
-  if (typeof lgtm !== "boolean") {
+  if (typeof lgtm !== 'boolean') {
     throw new TypeError(
-      "Invalid input: lgtm parameter must be a boolean. " +
+      'Invalid input: lgtm parameter must be a boolean. ' +
         `Received ${typeof lgtm}: ${String(lgtm)}`
     );
   }
@@ -357,16 +344,16 @@ export function calculateQualityScore(
   // SECURITY: Enforce authorization when LGTM is claimed
   if (lgtm && !reviewerAuth) {
     throw new Error(
-      "SECURITY ERROR: LGTM requires verified reviewer authorization. " +
-        "Call verifyReviewerAuthorization() first and pass the result as reviewerAuth parameter."
+      'SECURITY ERROR: LGTM requires verified reviewer authorization. ' +
+        'Call verifyReviewerAuthorization() first and pass the result as reviewerAuth parameter.'
     );
   }
 
   // Additional check: even with reviewerAuth, verify it's actually verified
   if (lgtm && reviewerAuth && !reviewerAuth.isVerified) {
     throw new Error(
-      "SECURITY ERROR: LGTM requires isVerified=true in reviewerAuth. " +
-        "The provided authorization is not verified."
+      'SECURITY ERROR: LGTM requires isVerified=true in reviewerAuth. ' +
+        'The provided authorization is not verified.'
     );
   }
 
@@ -424,7 +411,7 @@ export function aggregateReviewMetrics(
 ): ReviewMetrics {
   // Input validation (Issue #9)
   if (!Array.isArray(reviews)) {
-    throw new TypeError("Invalid input: reviews must be an array");
+    throw new TypeError('Invalid input: reviews must be an array');
   }
 
   let criticalIssues = 0;
@@ -435,7 +422,7 @@ export function aggregateReviewMetrics(
 
   for (const review of reviews) {
     // Validate lgtm is a boolean
-    if (typeof review.lgtm !== "boolean") {
+    if (typeof review.lgtm !== 'boolean') {
       throw new TypeError(
         `Invalid input: lgtm must be a boolean. ` +
           `Received ${typeof review.lgtm}: ${String(review.lgtm)}`
@@ -475,10 +462,7 @@ export function aggregateReviewMetrics(
  * Caches authorization results to avoid redundant API calls
  * Implements bounded LRU-style cache with automatic eviction
  */
-const authCache = new Map<
-  string,
-  { result: ReviewerAuth; timestamp: number }
->();
+const authCache = new Map<string, { result: ReviewerAuth; timestamp: number }>();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 const MAX_CACHE_SIZE = 1000; // Prevent unbounded growth
 
@@ -551,11 +535,11 @@ export async function verifyReviewerAuthorization(
     const response = await globalThis.fetch(
       `https://api.github.com/repos/${encodedOwner}/${encodedRepo}/collaborators/${encodedLogin}/permission`,
       {
-        method: "GET",
+        method: 'GET',
         headers: {
           Authorization: `token ${githubToken}`,
-          Accept: "application/vnd.github.v3+json",
-          "User-Agent": "ChatGPT-CodeReview-Bot",
+          Accept: 'application/vnd.github.v3+json',
+          'User-Agent': 'ChatGPT-CodeReview-Bot',
         },
       }
     );
@@ -575,9 +559,7 @@ export async function verifyReviewerAuthorization(
         return result;
       }
 
-      throw new Error(
-        `GitHub API error: ${response.status} ${response.statusText}`
-      );
+      throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
     }
 
     const data = (await response.json()) as {
@@ -590,10 +572,10 @@ export async function verifyReviewerAuthorization(
     if (
       !data ||
       !data.user ||
-      typeof data.user.login !== "string" ||
-      typeof data.permission !== "string"
+      typeof data.user.login !== 'string' ||
+      typeof data.permission !== 'string'
     ) {
-      console.error("Malformed GitHub API response:", {
+      console.error('Malformed GitHub API response:', {
         hasData: !!data,
         hasUser: !!data?.user,
         hasLogin: typeof data?.user?.login,
@@ -609,12 +591,11 @@ export async function verifyReviewerAuthorization(
     }
 
     // Verify the login matches (security check)
-    const isVerified =
-      data.user.login.toLowerCase() === githubLogin.toLowerCase();
+    const isVerified = data.user.login.toLowerCase() === githubLogin.toLowerCase();
 
     // Check if user has write or admin access
     // Permissions: 'read', 'write', 'admin', 'none'
-    const hasWriteAccess = ["admin", "write"].includes(data.permission);
+    const hasWriteAccess = ['admin', 'write'].includes(data.permission);
 
     const result: ReviewerAuth = {
       isVerified,
@@ -628,7 +609,7 @@ export async function verifyReviewerAuthorization(
     return result;
   } catch (error) {
     // Issue #29: Never log tokens - sanitize error logging
-    console.error("Failed to verify reviewer authorization:", {
+    console.error('Failed to verify reviewer authorization:', {
       reviewer: githubLogin,
       repo: `${repoOwner}/${repoName}`,
       error: error instanceof Error ? error.message : String(error),

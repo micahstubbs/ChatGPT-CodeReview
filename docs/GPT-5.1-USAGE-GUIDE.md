@@ -5,6 +5,7 @@ This guide explains how to use the latest GPT-5.1 and GPT-5 Pro models with Chat
 ## Available Models
 
 ### GPT-5.1
+
 - **Model ID:** `gpt-5.1`
 - **Description:** Enhanced reasoning and conversational model
 - **Best for:** General-purpose code review with improved intelligence
@@ -13,6 +14,7 @@ This guide explains how to use the latest GPT-5.1 and GPT-5 Pro models with Chat
 - **Pricing:** $1.25/1M input tokens, $10/1M output tokens
 
 ### GPT-5.1-Codex (Recommended)
+
 - **Model ID:** `gpt-5.1-codex`
 - **Description:** Specialized for code review and generation tasks
 - **Best for:** Agentic code review, bug detection, refactoring suggestions
@@ -22,6 +24,7 @@ This guide explains how to use the latest GPT-5.1 and GPT-5 Pro models with Chat
 - **Special features:** Optimized for long-running coding workflows
 
 ### GPT-5.1-Codex-Mini (Cost-Effective)
+
 - **Model ID:** `gpt-5.1-codex-mini`
 - **Description:** Compact variant with near state-of-the-art performance
 - **Best for:** Budget-conscious teams needing excellent code review
@@ -30,6 +33,7 @@ This guide explains how to use the latest GPT-5.1 and GPT-5 Pro models with Chat
 - **Pricing:** $0.25/1M input tokens, $2/1M output tokens
 
 ### GPT-5 Pro (Premium Tier)
+
 - **Model ID:** `gpt-5-pro`
 - **Description:** Extended reasoning variant with highest accuracy across difficult tasks
 - **Best for:** Critical PRs, security audits, complex architectural reviews, abstract problem solving
@@ -121,6 +125,7 @@ PROMPT=Please perform a thorough code review focusing on bugs, security issues, 
 ## Requirements
 
 ### API Access
+
 - **OpenAI API Key:** You need an OpenAI API key with access to GPT-5.1 models
 - **Account type:** GPT-5.1 models may require specific account tiers
 - **Availability:** Currently in public preview (as of November 2025)
@@ -132,6 +137,7 @@ PROMPT=Please perform a thorough code review focusing on bugs, security issues, 
 See [GPT-5.1-MIGRATION-REQUIRED.md](./GPT-5.1-MIGRATION-REQUIRED.md) for detailed migration information.
 
 **Current Status:**
+
 - ✅ GPT-5.1 models will work with existing code
 - ⚠️ **BUT:** You will NOT get optimal performance without code migration
 - ⚠️ **Missing features:** Reasoning effort control, CoT passing, adaptive reasoning
@@ -139,11 +145,14 @@ See [GPT-5.1-MIGRATION-REQUIRED.md](./GPT-5.1-MIGRATION-REQUIRED.md) for detaile
 - 🚧 **Code migration in progress** - See migration guide
 
 **Recommended Action:**
+
 - For **production use:** Wait for Responses API migration OR use GPT-4o-mini/GPT-4o
 - For **testing:** GPT-5.1 will work but with suboptimal performance
 
 ### GitHub Copilot Integration
+
 GPT-5.1-Codex is also available through GitHub Copilot:
+
 - Copilot Pro
 - Copilot Pro+
 - Copilot Business
@@ -153,15 +162,15 @@ GPT-5.1-Codex is also available through GitHub Copilot:
 
 ### Pricing Comparison
 
-| Model | Input (per 1M tokens) | Output (per 1M tokens) | Cost Ratio |
-|-------|----------------------|------------------------|------------|
-| gpt-3.5-turbo | $0.50 | $1.50 | 1x (baseline) |
-| gpt-4o | $2.50 | $10.00 | 5x |
-| gpt-4o-mini | $0.15 | $0.60 | 0.3x |
-| **gpt-5.1** | **$1.25** | **$10.00** | **2.5x** |
-| **gpt-5.1-codex** | **$1.25** | **$10.00** | **2.5x** |
-| **gpt-5.1-codex-mini** | **$0.25** | **$2.00** | **0.5x** |
-| **gpt-5-pro** | **$15.00** | **$120.00** | **30x** |
+| Model                  | Input (per 1M tokens) | Output (per 1M tokens) | Cost Ratio    |
+| ---------------------- | --------------------- | ---------------------- | ------------- |
+| gpt-3.5-turbo          | $0.50                 | $1.50                  | 1x (baseline) |
+| gpt-4o                 | $2.50                 | $10.00                 | 5x            |
+| gpt-4o-mini            | $0.15                 | $0.60                  | 0.3x          |
+| **gpt-5.1**            | **$1.25**             | **$10.00**             | **2.5x**      |
+| **gpt-5.1-codex**      | **$1.25**             | **$10.00**             | **2.5x**      |
+| **gpt-5.1-codex-mini** | **$0.25**             | **$2.00**              | **0.5x**      |
+| **gpt-5-pro**          | **$15.00**            | **$120.00**            | **30x**       |
 
 ### Cost Optimization Tips
 
@@ -178,7 +187,7 @@ GPT-5.1-Codex is also available through GitHub Copilot:
    ```
 6. **Adjust max_tokens** based on your needs:
    ```yaml
-   max_tokens: 5000  # Reduce from default to save on output costs
+   max_tokens: 5000 # Reduce from default to save on output costs
    ```
 
 ### Model Selection Strategy
@@ -200,6 +209,7 @@ GPT-5.1-Codex is also available through GitHub Copilot:
 ### Benchmark Results
 
 Based on OpenAI's official benchmarks:
+
 - **SWE-bench Verified:** 76.3% (GPT-5.1-Codex)
 - **Code understanding:** Significantly improved over GPT-4o
 - **Bug detection:** Higher accuracy in identifying subtle issues
@@ -207,17 +217,21 @@ Based on OpenAI's official benchmarks:
 ## Known Issues & Limitations
 
 ### API Availability
+
 Some users have reported errors when accessing GPT-5.1 models:
+
 ```
 400 Bad Request: {"detail":"The 'gpt-5.1-codex' model is not supported when using Codex with a ChatGPT account."}
 ```
 
 **Solutions:**
+
 - Ensure your OpenAI account has API access (not just ChatGPT access)
 - Verify your API key has GPT-5.1 model permissions
 - Check OpenAI's status page for model availability
 
 ### Account Type Restrictions
+
 - GPT-5.1 models may not be available to all account types
 - Public preview access may be limited
 - Contact OpenAI support if you encounter access issues
@@ -227,6 +241,7 @@ Some users have reported errors when accessing GPT-5.1 models:
 ### From GPT-4o to GPT-5.1-Codex
 
 **Before:**
+
 ```yaml
 env:
   OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -234,6 +249,7 @@ env:
 ```
 
 **After:**
+
 ```yaml
 env:
   OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -257,14 +273,16 @@ env:
 ### Example Test PR
 
 Create a simple PR with this change:
+
 ```javascript
 // Add a function with an obvious bug
 function divide(a, b) {
-  return a / b;  // Missing zero check!
+  return a / b; // Missing zero check!
 }
 ```
 
 GPT-5.1-Codex should identify:
+
 - Missing zero division check
 - Lack of input validation
 - No error handling
@@ -307,37 +325,47 @@ env:
 ## Frequently Asked Questions
 
 ### Q: Do I need to modify any code to use GPT-5.1?
+
 **A:** No! Simply change the `MODEL` environment variable to your desired GPT-5.1 model.
 
 ### Q: Which model should I use?
+
 **A:**
+
 - For **most code reviews**: `gpt-5.1-codex-mini` (best value)
 - For **important PRs**: `gpt-5.1-codex` (best quality/cost balance)
 - For **critical security/architectural reviews**: `gpt-5-pro` (highest accuracy, premium cost)
 
 ### Q: Will GPT-5.1 work with GitHub Models?
+
 **A:** GitHub Models support is pending official availability. Currently, use the standard OpenAI API.
 
 ### Q: How much will these models cost compared to GPT-4o?
+
 **A:**
+
 - **gpt-5.1-codex-mini**: 90% cheaper than GPT-4o ($0.25 vs $2.50 input)
 - **gpt-5.1-codex**: 50% cheaper than GPT-4o ($1.25 vs $2.50 input)
 - **gpt-5-pro**: 6x more expensive than GPT-4o ($15 vs $2.50 input)
 
 ### Q: Can I use GPT-5.1 with Azure OpenAI?
+
 **A:** Azure OpenAI support depends on model availability in your region. Check Azure's model catalog.
 
 ### Q: What if I get a 400 error?
+
 **A:** Ensure your API key has GPT-5.1 access. Contact OpenAI support if the issue persists.
 
 ## Resources
 
 ### Official Documentation
+
 - [OpenAI GPT-5.1 Announcement](https://openai.com/index/gpt-5-1/)
 - [OpenAI Platform Docs - GPT-5.1-Codex](https://platform.openai.com/docs/models/gpt-5.1-codex)
 - [GitHub Blog - GPT-5.1 in Copilot](https://github.blog/changelog/2025-11-13-openais-gpt-5-1-gpt-5-1-codex-and-gpt-5-1-codex-mini-are-now-in-public-preview-for-github-copilot/)
 
 ### ChatGPT-CodeReview Resources
+
 - [Main Repository](https://github.com/anc95/ChatGPT-CodeReview)
 - [GitHub Marketplace Action](https://github.com/marketplace/actions/chatgpt-codereviewer)
 - [Issue Tracker](https://github.com/anc95/ChatGPT-CodeReview/issues)
@@ -345,6 +373,7 @@ env:
 ## Support
 
 If you encounter issues with GPT-5.1 models:
+
 1. Check the [Investigation Report](./GPT-5-FORK-INVESTIGATION.md) for known issues
 2. Open an issue in the [ChatGPT-CodeReview repository](https://github.com/anc95/ChatGPT-CodeReview/issues)
 3. Contact OpenAI support for API access issues
@@ -352,6 +381,7 @@ If you encounter issues with GPT-5.1 models:
 ## Changelog
 
 ### 2025-11-18
+
 - Added GPT-5.1 model support documentation
 - Created usage guide with configuration examples
 - Documented pricing and cost optimization strategies

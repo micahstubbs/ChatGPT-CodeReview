@@ -9,21 +9,25 @@ ChatGPT-CodeReview is a GitHub bot powered by OpenAI models (GPT-4o, GPT-5.1, et
 ## Build and Development Commands
 
 ### Install dependencies
+
 ```bash
 yarn install
 ```
 
 ### Build the project
+
 ```bash
 yarn build
 ```
 
 This builds three targets:
+
 - `dist/` - Main Probot bot (ES modules)
 - `action/` - GitHub Action bundle (compiled with @vercel/ncc)
 - `lambda/` - AWS Lambda bundle (use `yarn build:lambda`)
 
 ### Run tests
+
 ```bash
 yarn test
 ```
@@ -31,6 +35,7 @@ yarn test
 Tests use Jest with ts-jest. Test files: `test/*.test.ts`
 
 ### Run the bot locally
+
 ```bash
 yarn start
 ```
@@ -83,16 +88,19 @@ Requires `.env` file with configuration (see `.env.example`)
 ## Model Support
 
 ### Chat Completions API Models
+
 - `gpt-4o`, `gpt-4o-mini` (recommended)
 - `gpt-3.5-turbo`
 
 ### Responses API Models (GPT-5.1+)
+
 - `gpt-5.1` - Enhanced reasoning model
 - `gpt-5.1-codex` - Optimized for code review
 - `gpt-5.1-codex-mini` - Cost-effective variant
 - `gpt-5-pro` - Premium tier with extended reasoning
 
 **Key Difference**: GPT-5.1 models use `src/chat.ts:codeReviewWithResponsesAPI()` which supports:
+
 - Chain of thought (CoT) passing
 - Reasoning effort control (`REASONING_EFFORT`: none/minimal/low/medium/high)
 - Structured output schema (instead of `response_format`)
@@ -100,11 +108,13 @@ Requires `.env` file with configuration (see `.env.example`)
 ## Environment Variables
 
 ### Required
+
 - `OPENAI_API_KEY` - OpenAI API key (or set in GitHub repo variables)
 - `APP_ID` - GitHub App ID (for self-hosted bot)
 - `PRIVATE_KEY` - GitHub App private key (for self-hosted bot)
 
 ### Optional
+
 - `MODEL` - Model name (default: `gpt-4o-mini`)
 - `LANGUAGE` - Review language (e.g., "Chinese", "English")
 - `PROMPT` - Custom review prompt
@@ -119,39 +129,46 @@ Requires `.env` file with configuration (see `.env.example`)
 - `TARGET_LABEL` - Only review PRs with this label
 
 ### Azure OpenAI
+
 - `AZURE_API_VERSION`
 - `AZURE_DEPLOYMENT`
 - `OPENAI_API_ENDPOINT`
 
 ### GitHub Models
+
 - `USE_GITHUB_MODELS=true`
 - `GITHUB_TOKEN`
 
 ## Deployment Targets
 
 ### 1. GitHub App (Self-hosted)
+
 ```bash
 yarn build
 pm2 start pm2.config.cjs
 ```
 
 ### 2. GitHub Actions
+
 Use marketplace action: `anc95/ChatGPT-CodeReview@main`
 
 Workflow file: `.github/workflows/cr.yml`
 
 ### 3. AWS Lambda
+
 ```bash
 yarn build:lambda
 # Deploy lambda/ directory to AWS Lambda
 ```
 
 ### 4. Vercel Edge
+
 Deploy `middleware.ts` to Vercel edge functions
 
 ## File Filtering Logic
 
 Files are processed in this order:
+
 1. Extract changed files from PR diff
 2. If `INCLUDE_PATTERNS` is set, only process matching files
 3. Otherwise, exclude files matching `IGNORE_PATTERNS`
@@ -159,6 +176,7 @@ Files are processed in this order:
 5. Skip files where `patch.length > MAX_PATCH_LENGTH`
 
 Pattern matching supports:
+
 - Glob patterns (via `minimatch`)
 - Regex patterns (fallback if glob fails)
 - Both absolute paths (`/node_modules`) and relative patterns (`*.md`)
@@ -178,6 +196,7 @@ Pattern matching supports:
 ## Testing
 
 Run all tests:
+
 ```bash
 yarn test
 ```
@@ -195,11 +214,13 @@ All feature and fix branches must follow this naming format:
 ```
 
 **Examples:**
+
 - `30/phase1-critical-security-fixes` - Implementation for issue #30
 - `25/fix-404-authorization-bug` - Fix for issue #25
 - `14/implement-lgtm-authorization` - Feature for issue #14
 
 **Rules:**
+
 - Always create a GitHub issue first
 - Use the issue number as the branch prefix
 - Use lowercase with hyphens for description
@@ -208,6 +229,7 @@ All feature and fix branches must follow this naming format:
 ### Planning and Documentation
 
 When working on significant features or fixes:
+
 1. Create a GitHub issue for the work
 2. Create design/planning documents in `issues/<issue-number>/` directory
 3. Checkout branch using the naming convention above
@@ -228,12 +250,14 @@ This project has pre-configured git worktrees available for parallel development
 - `~/workspace/worktrees/ChatGPT-CodeReview-worktree-4`
 
 **Usage:**
+
 - Each worktree is a separate working directory sharing the same git repository
 - Use worktrees to work on multiple branches simultaneously without switching contexts
 - Ideal for parallel agent workflows where multiple independent tasks need isolated workspaces
 - Each worktree can be on a different branch, allowing concurrent development without conflicts
 
 **Example:**
+
 ```bash
 # Worktree-0 working on feature A
 cd ~/workspace/worktrees/ChatGPT-CodeReview-worktree-0

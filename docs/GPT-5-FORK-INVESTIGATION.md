@@ -4,6 +4,7 @@
 **Repository Investigated:** https://github.com/anc95/ChatGPT-CodeReview
 **Total Forks:** 460
 **Models Searched For:**
+
 - GPT-5.1 (`gpt-5.1`)
 - GPT-5.1-Codex (`gpt-5.1-codex`)
 - GPT-5.1-Codex-Mini (`gpt-5.1-codex-mini`)
@@ -50,6 +51,7 @@ model: process.env.MODEL || (this.isGithubModels ? 'openai/gpt-4o-mini' : 'gpt-4
 ```
 
 This implementation allows any model name to be passed via the `MODEL` environment variable, with the default being:
+
 - `gpt-4o-mini` for standard OpenAI
 - `openai/gpt-4o-mini` for GitHub Models
 
@@ -86,6 +88,7 @@ Based on web research findings:
 **URL:** https://github.com/repo-racers/gpt-codereview-action
 
 **Findings:**
+
 - Described as a customized fork with dedicated technical support
 - **No explicit GPT-5.1 support found** in README or `src/chat.ts`
 - Uses same architecture as main repository
@@ -95,6 +98,7 @@ Based on web research findings:
 ### 2. Other Observed Forks
 
 From the network graph (https://github.com/anc95/ChatGPT-CodeReview/network/members):
+
 - 460 total forks listed
 - Several forks with modified names observed:
   - "Bard-CodeReview-fork"
@@ -109,11 +113,13 @@ From the network graph (https://github.com/anc95/ChatGPT-CodeReview/network/memb
 Checked: https://github.com/anc95/ChatGPT-CodeReview/issues
 
 **Relevant Issues Found:**
+
 - Issue #189: "Support GitHub Models inference provider" (opened Jul 29, 2025) - IMPLEMENTED
 - Issue #147: "[Feature Request] More LLM support" (opened Jun 20, 2024)
 - Issue #175: "Is that support deepseek?" (opened Jan 28, 2025)
 
 **No issues found mentioning:**
+
 - GPT-5
 - GPT-5.1
 - GPT-5.1-Codex
@@ -124,6 +130,7 @@ Checked: https://github.com/anc95/ChatGPT-CodeReview/issues
 Checked: https://github.com/anc95/ChatGPT-CodeReview/pulls
 
 **Findings:**
+
 - 5 open pull requests
 - None mention GPT-5 models or recent model updates
 - No merged PRs found specifically for GPT-5.1 support
@@ -144,15 +151,17 @@ Checked: https://github.com/anc95/ChatGPT-CodeReview/pulls
 Based on the current architecture, users should be able to use GPT-5.1 models by setting:
 
 **For GitHub Actions:**
+
 ```yaml
 - uses: anc95/ChatGPT-CodeReview@main
   env:
     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-    MODEL: gpt-5.1  # or gpt-5.1-codex or gpt-5.1-codex-mini
+    MODEL: gpt-5.1 # or gpt-5.1-codex or gpt-5.1-codex-mini
 ```
 
 **For GitHub Models (if/when available):**
+
 ```yaml
 - uses: anc95/ChatGPT-CodeReview@main
   env:
@@ -164,6 +173,7 @@ Based on the current architecture, users should be able to use GPT-5.1 models by
 ### Potential Issues
 
 Some users have reported issues with GPT-5.1-Codex:
+
 - GitHub Issue openai/codex#6582: "Cannot use GPT-5.1-codex from latest alpha"
 - Error: `400 Bad Request: {"detail":"The 'gpt-5.1-codex' model is not supported when using Codex with a ChatGPT account."}`
 - This suggests API access restrictions may apply depending on account type
@@ -197,6 +207,7 @@ While searching for GPT-5.1 support, I also investigated forks supporting altern
 ### Models Requested by Community
 
 Based on issues and discussions:
+
 - **DeepSeek** (Issue #175)
 - **Claude** (mentioned in fork names)
 - **Gemini** (mentioned in fork names)
@@ -205,6 +216,7 @@ Based on issues and discussions:
 ### Theoretical Compatibility
 
 The architecture suggests any OpenAI API-compatible service could work by:
+
 1. Setting `OPENAI_API_ENDPOINT` to the alternative service endpoint
 2. Setting `MODEL` to the alternative model name
 3. Providing appropriate API key via `OPENAI_API_KEY`
@@ -248,6 +260,7 @@ For users wanting to use GPT-5.1 models with ChatGPT-CodeReview:
 ### GitHub Copilot Integration
 
 GPT-5.1-Codex is officially available in:
+
 - GitHub Copilot (Pro, Pro+, Business, Enterprise)
 - Codex CLI and IDE integrations
 - @codex mentions in pull requests and issues
@@ -257,6 +270,7 @@ This may reduce demand for direct API integration in code review tools, as many 
 ### Model Performance Notes
 
 From research findings:
+
 - GPT-5.1-Codex achieved 76.3% on SWE-bench Verified
 - Designed for "long-running, agentic coding tasks"
 - Includes new tools: `apply_patch` and `shell`
@@ -279,16 +293,19 @@ From research findings:
 ## References
 
 ### Official Documentation
+
 - GitHub Blog: "OpenAI's GPT-5.1, GPT-5.1-Codex and GPT-5.1-Codex-Mini are now in public preview for GitHub Copilot"
 - OpenAI: "Introducing GPT-5.1 for developers"
 - OpenAI Platform Docs: GPT-5.1-Codex model documentation
 
 ### Repository Links
+
 - Main repo: https://github.com/anc95/ChatGPT-CodeReview
 - Network graph: https://github.com/anc95/ChatGPT-CodeReview/network/members
 - Notable fork: https://github.com/repo-racers/gpt-codereview-action
 
 ### Related Issues
+
 - openai/codex#6582: Cannot use GPT-5.1-codex from latest alpha
 - openai/codex#6603: 400 Bad Request error for gpt-5.1-codex
 - anc95/ChatGPT-CodeReview#189: Support GitHub Models inference provider
