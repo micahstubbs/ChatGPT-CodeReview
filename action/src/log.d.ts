@@ -1,2 +1,2 @@
-import log from "loglevel";
+import log from 'loglevel';
 export default log;

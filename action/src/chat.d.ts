@@ -4,6 +4,7 @@ export declare class Chat {
     private isGithubModels;
     constructor(apikey: string);
     private isReasoningModel;
+    private getValidVerbosity;
     private generatePrompt;
     private codeReviewWithResponsesAPI;
     private codeReviewWithChatAPI;

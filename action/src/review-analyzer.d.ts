@@ -12,7 +12,7 @@ export interface ReviewMetrics {
 }
 export interface CodeQualityScore {
     score: number;
-    category: "excellent" | "good" | "needs-improvement" | "critical";
+    category: 'excellent' | 'good' | 'needs-improvement' | 'critical';
     breakdown: {
         security: number;
         maintainability: number;
