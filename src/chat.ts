@@ -35,6 +35,24 @@ export class Chat {
     return reasoningModels.some((m) => model.includes(m));
   }
 
+  // Get valid verbosity for model (gpt-5.1-codex only supports 'medium')
+  private getValidVerbosity(model: string): 'low' | 'medium' | 'high' {
+    const requestedVerbosity = process.env.VERBOSITY as 'low' | 'medium' | 'high' | undefined;
+
+    // gpt-5.1-codex only supports 'medium' verbosity
+    if (model.includes('gpt-5.1-codex')) {
+      if (requestedVerbosity && requestedVerbosity !== 'medium') {
+        console.log(
+          `Warning: ${model} only supports verbosity 'medium'. Ignoring VERBOSITY=${requestedVerbosity}`
+        );
+      }
+      return 'medium';
+    }
+
+    // Other models support low, medium, high - default to medium for safety
+    return requestedVerbosity || 'medium';
+  }
+
   private generatePrompt = (patch: string) => {
     const answerLanguage = process.env.LANGUAGE ? `Answer me in ${process.env.LANGUAGE},` : '';
 
@@ -97,7 +115,7 @@ export class Chat {
           effort: (process.env.REASONING_EFFORT as any) || 'medium',
         },
         text: {
-          verbosity: (process.env.VERBOSITY as any) || 'low', // Set to low for conciseness
+          verbosity: this.getValidVerbosity(model),
           format: {
             type: 'json_schema',
             name: 'code_review_response',
