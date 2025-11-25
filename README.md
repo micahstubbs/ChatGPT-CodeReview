@@ -1,6 +1,8 @@
-# CodeReview BOT
+# GPT 5.x PR Reviewer
 
-> A code review robot powered by ChatGPT
+> AI-powered code review for Pull Requests using GPT-5.1, GPT-5.1-Codex, GPT-5-Pro, and GPT-4o
+
+[![GitHub Marketplace](https://img.shields.io/badge/Marketplace-GPT%205.x%20PR%20Reviewer-blue?logo=github)](https://github.com/marketplace/actions/gpt-5-x-pr-reviewer)
 
 Translation Versions: [ENGLISH](./README.md) | [简体中文](./README.zh-CN.md) | [繁體中文](./README.zh-TW.md) | [한국어](./README.ko.md) | [日本語](./README.ja.md)
 
@@ -33,7 +35,7 @@ example:
 
 ## Using Github Actions
 
-[actions/chatgpt-codereviewer](https://github.com/marketplace/actions/chatgpt-codereviewer)
+[![GitHub Marketplace](https://img.shields.io/badge/Marketplace-GPT%205.x%20PR%20Reviewer-blue?logo=github)](https://github.com/marketplace/actions/gpt-5-x-pr-reviewer)
 
 1. add the `OPENAI_API_KEY` to your github actions secrets
 2. create `.github/workflows/cr.yml` add bellow content
@@ -55,7 +57,7 @@ jobs:
     # if: ${{ contains(github.event.*.labels.*.name, 'gpt review') }} # Optional; to run only when a label is attached
     runs-on: ubuntu-latest
     steps:
-      - uses: anc95/ChatGPT-CodeReview@main
+      - uses: micahstubbs/ChatGPT-CodeReview@v2.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -70,17 +72,16 @@ jobs:
           # else use standard llm model
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_API_ENDPOINT: https://api.openai.com/v1
-          MODEL: gpt-4o # https://platform.openai.com/docs/models
+          MODEL: gpt-5.1-codex # https://platform.openai.com/docs/models
           # Supported models include:
-          # - gpt-4o, gpt-4o-mini (recommended for most use cases)
-          # - gpt-3.5-turbo
-          # - gpt-5.1, gpt-5.1-codex, gpt-5.1-codex-mini (latest models with enhanced reasoning)
-          # - gpt-5-pro (highest performance, premium pricing for complex reviews)
-          # Note: GPT-5.1 and GPT-5 Pro models require API access and have higher costs
+          # - gpt-5.1-codex (recommended - optimized for code)
+          # - gpt-5.1-codex-mini (cost-effective option)
+          # - gpt-5.1 (general purpose)
+          # - gpt-5-pro (premium tier for critical reviews)
+          # - gpt-4o, gpt-4o-mini (previous generation)
+          # - gpt-3.5-turbo (legacy)
           #
-          # ⚠️ IMPORTANT: GPT-5.1 models require code migration to Responses API for optimal performance
-          # See GPT-5.1-MIGRATION-REQUIRED.md for details. GPT-5.1 will work with current code
-          # but without reasoning optimization, resulting in higher costs and lower performance.
+          # See docs/GPT-5.1-USAGE-GUIDE.md for detailed model comparison and pricing
 
           # common
           LANGUAGE: Chinese
