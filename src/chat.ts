@@ -55,11 +55,14 @@ export class Chat {
           `${model} only supports verbosity 'medium'. Ignoring VERBOSITY=${requestedVerbosity}`
         );
       }
+      log.debug(`Using verbosity 'medium' for model '${model}'`);
       return 'medium';
     }
 
     // Other models support low, medium, high - default to medium for safety
-    return typedVerbosity || 'medium';
+    const verbosity = typedVerbosity || 'medium';
+    log.debug(`Using verbosity '${verbosity}' for model '${model}'`);
+    return verbosity;
   }
 
   private generatePrompt = (patch: string) => {
